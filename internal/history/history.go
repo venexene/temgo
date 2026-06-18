@@ -1,0 +1,55 @@
+package history
+
+import (
+	"encoding/json"
+	"path/filepath"
+	"time"
+	"os"
+)
+
+type Entry struct {
+	Type string `json:"type"`
+	Start time.Time `json:"start"`
+	Duration int `json:"duration_sec"`
+	Finished bool `json:"finished"`
+}
+
+type History struct {
+	Records []Entry
+	filePath string
+}
+
+func NewHistory(filePath string) *History {
+	return &History{
+		Records: []Entry{},
+		filePath: filePath,
+	}
+}
+
+func (h *History) Add(record Entry) {
+	h.Records = append(h.Records, record)
+}
+
+func (h *History) Save() error {
+	if err := os.MkdirAll(filepath.Dir(h.filePath), 0755); err != nil {
+		return err
+	}
+
+	file, err := os.OpenFile(h.filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	encoder := json.NewEncoder(file)
+
+	for _, record := range h.Records {
+		if err := encoder.Encode(record); err != nil {
+			return err
+		}
+	}
+
+	h.Records = h.Records[:0]
+
+	return nil
+}
