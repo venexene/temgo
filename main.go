@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"os/signal"
 	"syscall"
@@ -18,19 +19,43 @@ func main() {
 
 	fmt.Println("Welcome to Temgo!")
 
-	prolog := flag.Duration("p", 10 * time.Second, "prologue time")
-	work := flag.Duration("w", 25 * time.Minute, "work time")
-	rest := flag.Duration("r",  5 * time.Minute, "rest time")
-	longRest := flag.Duration("lr",  30 * time.Minute, "long rest time")
-	cycles := flag.Int("c",  4, "cycles num")
-	sprints := flag.Int("s",  3, "sprints num")
+	t, err := parseFlags()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "temgo: %v\n", err)
+		os.Exit(2)
+	}
 
-	flag.Parse()
-
-	timer := timer.NewWorkTimer(*prolog, *work, *rest, *longRest, *cycles, *sprints)
-	if err := timer.Start(ctx); err != nil {
+	if err := t.Start(ctx); err != nil {
 		fmt.Fprintf(os.Stderr, "temgo: %v\n", err)
 	}
 	
 	fmt.Println("Bye!")
+}
+
+func parseFlags() (*timer.WorkTimer, error) {
+	fs := flag.NewFlagSet("temgo", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+
+	prolog := fs.Duration("p", 10 * time.Second, "prologue time")
+	work := fs.Duration("w", 25 * time.Minute, "work time")
+	rest := fs.Duration("r",  5 * time.Minute, "rest time")
+	longRest := fs.Duration("lr",  30 * time.Minute, "long rest time")
+	cycles := fs.Int("c",  4, "cycles num")
+	sprints := fs.Int("s",  3, "sprints num")
+
+	if err := fs.Parse(os.Args[1:]); err != nil {
+		return nil, err
+	}
+
+	if *work <= 0 || *rest <= 0 || *longRest <= 0 {
+		return nil, fmt.Errorf("durations must be positive")
+	}
+	if *cycles <= 0 || *sprints <= 0 {
+		return nil, fmt.Errorf("counts must be positive")
+	}
+	if *prolog < 0 {
+		return nil, fmt.Errorf("prolog must be non-negative")
+	}
+
+	return timer.NewWorkTimer(*prolog, *work, *rest, *longRest, *cycles, *sprints), nil
 }
