@@ -41,7 +41,6 @@ func (t *WorkTimer) Start(ctx context.Context) error {
 	return ctx.Err()
 }
 
-
 func (t *WorkTimer) run(ctx context.Context) {
 	for s := t.sprints; s > 0; s-- {
 		fmt.Println("\nGet Ready!")
@@ -117,9 +116,14 @@ func (t *WorkTimer) run(ctx context.Context) {
 func (t* WorkTimer) runPhase(ctx context.Context, deadline time.Time) error {
 	ticker := t.startTicker(deadline, ctx)
 	for remaining := range ticker {
-		fmt.Printf("%02d:%02d\r", int(remaining.Seconds())/60, int(remaining.Seconds())%60)
+		seconds := int(remaining.Seconds())
+		if seconds >= 3600 {
+			fmt.Printf("%d:%02d:%02d\r", seconds/3600,(seconds%3600)/60, seconds%60)
+		} else {
+			fmt.Printf("%02d:%02d\r", seconds/60, seconds%60)
+		}
 	}
-	fmt.Println()
+	fmt.Println("\a")
 	return ctx.Err()
 }
 
