@@ -7,6 +7,7 @@ import (
 	"os"
 )
 
+
 type Entry struct {
 	Type string `json:"type"`
 	Start time.Time `json:"start"`
@@ -15,22 +16,24 @@ type Entry struct {
 }
 
 type History struct {
-	Records []Entry
+	Entries []Entry
 	filePath string
 }
 
 func NewHistory(filePath string) *History {
 	return &History{
-		Records: []Entry{},
+		Entries: []Entry{},
 		filePath: filePath,
 	}
 }
 
-func (h *History) Add(record Entry) {
-	h.Records = append(h.Records, record)
+
+func (h *History) Add(entry Entry) {
+	h.Entries = append(h.Entries, entry)
 }
 
-func (h *History) Save() error {
+
+func (h *History) Flush() error {
 	if err := os.MkdirAll(filepath.Dir(h.filePath), 0755); err != nil {
 		return err
 	}
@@ -43,13 +46,14 @@ func (h *History) Save() error {
 
 	encoder := json.NewEncoder(file)
 
-	for _, record := range h.Records {
+	for _, record := range h.Entries {
 		if err := encoder.Encode(record); err != nil {
 			return err
 		}
 	}
 
-	h.Records = h.Records[:0]
+	h.Entries = h.Entries[:0]
 
 	return nil
 }
+ 

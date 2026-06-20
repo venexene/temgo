@@ -9,6 +9,7 @@ import (
 	"github.com/venexene/temgo/internal/history"
 )
 
+
 type WorkTimer struct {
 	prolog time.Duration
 	work time.Duration
@@ -35,11 +36,12 @@ func NewWorkTimer(prolog, work, rest, longRest time.Duration, cycles, sprints in
 func (t *WorkTimer) Start(ctx context.Context) error {
 	fmt.Println("\nWorkTimer started!")
 	t.run(ctx)
-	if err := t.history.Save(); err != nil {
+	if err := t.history.Flush(); err != nil {
 		fmt.Fprintf(os.Stderr, "temgo: %v\n", err)
 	}
 	return ctx.Err()
 }
+
 
 func (t *WorkTimer) run(ctx context.Context) {
 	for s := t.sprints; s > 0; s-- {
@@ -113,15 +115,19 @@ func (t *WorkTimer) run(ctx context.Context) {
 }
 
 
+func formatDuration(t time.Duration) string {
+	seconds := int(t.Seconds())
+	if seconds >= 3600 {
+		return fmt.Sprintf("%d:%02d:%02d", seconds/3600,(seconds%3600)/60, seconds%60)
+	} else {
+		return fmt.Sprintf("%02d:%02d", seconds/60, seconds%60)
+	}
+}
+
 func (t* WorkTimer) runPhase(ctx context.Context, deadline time.Time) error {
 	ticker := t.startTicker(deadline, ctx)
 	for remaining := range ticker {
-		seconds := int(remaining.Seconds())
-		if seconds >= 3600 {
-			fmt.Printf("%d:%02d:%02d\r", seconds/3600,(seconds%3600)/60, seconds%60)
-		} else {
-			fmt.Printf("%02d:%02d\r", seconds/60, seconds%60)
-		}
+		fmt.Printf("%s\r", formatDuration(remaining))
 	}
 	fmt.Println("\a")
 	return ctx.Err()
