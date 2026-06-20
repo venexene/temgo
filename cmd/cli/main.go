@@ -18,13 +18,13 @@ func main() {
 
 	fmt.Println("Welcome to Temgo!")
 
-	params, err := config.ParseFlags(os.Args[1:])
+	plan, err := config.ParseFlags(os.Args[1:])
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "temgo: %v\n", err)
 		os.Exit(2)
 	}
 
-	wt := timer.NewWorkTimer(params.Prolog, params.Work, params.Rest, params.LongRest, params.Cycles, params.Sprints)
+	wt := timer.NewWorkTimer(plan)
 	
 	if err := wt.Start(ctx); err != nil {
 		fmt.Fprintf(os.Stderr, "temgo: %v\n", err)

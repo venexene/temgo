@@ -7,31 +7,20 @@ import (
 	"time"
 
 	"github.com/venexene/temgo/internal/history"
+	"github.com/venexene/temgo/internal/plan"
 )
 
-
 type WorkTimer struct {
-	prolog time.Duration
-	work time.Duration
-	rest time.Duration
-	longRest time.Duration
-	cycles int
-	sprints int
+	plan *plan.Plan
 	history *history.History
 }
 
-func NewWorkTimer(prolog, work, rest, longRest time.Duration, cycles, sprints int) *WorkTimer {
+func NewWorkTimer(plan *plan.Plan) *WorkTimer {
 	return &WorkTimer{
-		prolog: prolog,
-		work: work,
-		rest: rest,
-		longRest: longRest,
-		cycles: cycles,
-		sprints: sprints,
+		plan: plan,
 		history: history.NewHistory(".temgo/history.jsonl"),
 	}
 }
-
 
 func (t *WorkTimer) Start(ctx context.Context) error {
 	fmt.Println("\nWorkTimer started!")
@@ -42,78 +31,30 @@ func (t *WorkTimer) Start(ctx context.Context) error {
 	return ctx.Err()
 }
 
-
 func (t *WorkTimer) run(ctx context.Context) {
-	for s := t.sprints; s > 0; s-- {
-		fmt.Println("\nGet Ready!")
+	iter := plan.NewPlanIterator(t.plan)
+	for {
+		phase, ok := iter.Next()
+		if !ok {
+			break
+		}
+
 		start := time.Now()
-		deadline := start.Add(t.prolog)
+		deadline := start.Add(phase.Duration)
 		err := t.runPhase(ctx, deadline)
 		t.history.Add(history.Entry{
-			Type: "prolog", 
+			Type: phase.Type, 
 			Start: start,
 			Duration: int(time.Since(start).Seconds()),
-			Finished:err == nil,
+			Finished: err == nil,
 		})
 		if err != nil {
 			fmt.Println("\nInterrupted")
 			return
 		}
-
-		fmt.Printf("\nSprint started! Sprint %d/%d\n", t.sprints - s + 1, t.sprints)
-		for c := t.cycles; c > 0; c-- {
-			fmt.Printf("\nWork started! Cycle %d/%d\n", t.cycles - c + 1, t.cycles)
-			start = time.Now()
-			deadline = start.Add(t.work)
-			err = t.runPhase(ctx, deadline)
-			t.history.Add(history.Entry{
-				Type: "work", 
-				Start: start,
-				Duration: int(time.Since(start).Seconds()),
-				Finished:err == nil,
-			})
-			if err != nil {
-				fmt.Println("\nInterrupted")
-				return
-			}
-
-			fmt.Println("\nIt's time to rest!")
-			start = time.Now()
-			deadline = start.Add(t.rest)
-			err = t.runPhase(ctx, deadline)
-			t.history.Add(history.Entry{
-				Type: "rest", 
-				Start: start,
-				Duration: int(time.Since(start).Seconds()),
-				Finished:err == nil,
-			})
-			if err != nil {
-				fmt.Println("\nInterrupted")
-				return
-			}
-		}
-		fmt.Println("\nSprint finished!")
-
-		fmt.Println("\nIt's time for a long rest!")
-		start = time.Now()
-		deadline = start.Add(t.longRest)
-		err = t.runPhase(ctx, deadline)
-		t.history.Add(history.Entry{
-			Type: "longRest", 
-			Start: start,
-			Duration: int(time.Since(start).Seconds()),
-			Finished:err == nil,
-		})
-		if err != nil {
-			fmt.Println("\nInterrupted")
-			return
-		}
-		fmt.Println("Long rest finished!")
 	}
-	
 	fmt.Println("\nAll sprints done!")
 }
-
 
 func formatDuration(t time.Duration) string {
 	seconds := int(t.Seconds())

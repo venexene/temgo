@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 	"time"
+
+	"github.com/venexene/temgo/internal/plan"
 )
 
 func TestTimer_DuarationFormat(t *testing.T) {
@@ -32,7 +34,7 @@ func TestTimer_DuarationFormat(t *testing.T) {
 }
 
 func TestTimer_Cancellation(t *testing.T) {
-	wt := NewWorkTimer(10*time.Second, 25*time.Minute, 5*time.Minute, 30*time.Minute, 4, 3)
+	wt := NewWorkTimer(plan.ClassicPlan())
 
 	ctx, cancel := context.WithCancel(context.Background())
 
