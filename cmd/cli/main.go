@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/venexene/temgo/internal/config"
+	"github.com/venexene/temgo/internal/history"
 	"github.com/venexene/temgo/internal/timer"
 )
 
@@ -24,7 +25,9 @@ func main() {
 		os.Exit(2)
 	}
 
-	wt := timer.NewWorkTimer(plan)
+
+	history := history.NewHistory(".temgo/history.jsonl")
+	wt := timer.NewWorkTimer(plan, history)
 	
 	if err := wt.Start(ctx); err != nil {
 		fmt.Fprintf(os.Stderr, "temgo: %v\n", err)

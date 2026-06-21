@@ -15,10 +15,10 @@ type WorkTimer struct {
 	history *history.History
 }
 
-func NewWorkTimer(plan *plan.Plan) *WorkTimer {
+func NewWorkTimer(plan *plan.Plan, history *history.History) *WorkTimer {
 	return &WorkTimer{
 		plan: plan,
-		history: history.NewHistory(".temgo/history.jsonl"),
+		history: history,
 	}
 }
 
@@ -56,7 +56,7 @@ func (t *WorkTimer) run(ctx context.Context) {
 	fmt.Println("\nAll sprints done!")
 }
 
-func formatDuration(t time.Duration) string {
+func FormatDuration(t time.Duration) string {
 	seconds := int(t.Seconds())
 	if seconds >= 3600 {
 		return fmt.Sprintf("%d:%02d:%02d", seconds/3600,(seconds%3600)/60, seconds%60)
@@ -68,7 +68,7 @@ func formatDuration(t time.Duration) string {
 func (t* WorkTimer) runPhase(ctx context.Context, deadline time.Time) error {
 	ticker := t.startTicker(deadline, ctx)
 	for remaining := range ticker {
-		fmt.Printf("%s\r", formatDuration(remaining))
+		fmt.Printf("%s\r", FormatDuration(remaining))
 	}
 	fmt.Println("\a")
 	return ctx.Err()

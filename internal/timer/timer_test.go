@@ -3,8 +3,10 @@ package timer
 import (
 	"context"
 	"testing"
+	"path/filepath"
 	"time"
 
+	"github.com/venexene/temgo/internal/history"
 	"github.com/venexene/temgo/internal/plan"
 )
 
@@ -25,7 +27,7 @@ func TestTimer_DuarationFormat(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := formatDuration(tt.input)
+			got := FormatDuration(tt.input)
 			if got != tt.expected {
 				t.Errorf("got %q, want %q", got, tt.expected)
 			}
@@ -34,7 +36,8 @@ func TestTimer_DuarationFormat(t *testing.T) {
 }
 
 func TestTimer_Cancellation(t *testing.T) {
-	wt := NewWorkTimer(plan.ClassicPlan())
+	dir := t.TempDir()
+	wt := NewWorkTimer(plan.ClassicPlan(), history.NewHistory(filepath.Join(dir, "test.jsonl")))
 
 	ctx, cancel := context.WithCancel(context.Background())
 
