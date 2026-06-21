@@ -22,6 +22,7 @@ type Model struct {
 	currentPhase plan.Phase
 	remaining    time.Duration
 	phaseStart   time.Time
+	phaseNum     int
 
 	paused bool
 	width  int
@@ -58,6 +59,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.remaining = phase.Duration
 		m.phaseStart = time.Now()
 		m.paused = true
+		m.phaseNum = 1
 		return m, nil
 
 	case tickMsg:
@@ -111,6 +113,7 @@ var (
 			Padding(1, 3).
 			Align(lipgloss.Center, lipgloss.Center)
 
+	counterStyle  = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#AAAAAA"))
 	headerStyle   = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FFD700"))
 	messageStyle  = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FFFFFF"))
 	timerStyle    = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FFFFFF"))
@@ -152,6 +155,10 @@ func formatHints(pairs ...string) string {
 }
 
 func (m Model) View() string {
+	totalPhases := m.plan.PhasesPerCycle()
+	cycle := m.iterator.CurrentRepeat() + 1
+	counter := counterStyle.Render(fmt.Sprintf("Phase %d/%d  ·  Cycle %d/%d", m.phaseNum, totalPhases, cycle, m.plan.Repeat))
+
 	header := headerStyle.Render(fmt.Sprintf("%s %s %s", m.currentPhase.Icon, m.currentPhase.Name, m.currentPhase.Icon))
 
 	message := messageStyle.Render(m.currentPhase.Message)
@@ -174,6 +181,8 @@ func (m Model) View() string {
 	)
 
 	content := lipgloss.JoinVertical(lipgloss.Center,
+		counter,
+		"",
 		header,
 		"",
 		message,
@@ -220,6 +229,12 @@ func (m *Model) switchPhase(finished bool) (tea.Model, tea.Cmd) {
 	m.currentPhase = newPhase
 	m.remaining = newPhase.Duration
 	m.phaseStart = time.Now()
+
+	m.phaseNum++
+	if m.phaseNum > m.plan.PhasesPerCycle() {
+		m.phaseNum = 1
+	}
+
 	return m, m.tick()
 }
 

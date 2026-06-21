@@ -67,6 +67,14 @@ type Plan struct {
 	Repeat   int
 }
 
+func (p *Plan) PhasesPerCycle() int {
+	total := 0
+	for _, s := range p.Sections {
+		total += len(s.Phases) * s.Repeat
+	}
+	return total
+}
+
 func ClassicPlan() *Plan {
 	return NewBuilder().
 		AddPhase("prolog", 10*time.Second,
@@ -169,5 +177,12 @@ func (pi *PlanIterator) Reset() {
 }
 
 func (pi *PlanIterator) CurrentRepeat() int {
+	if pi.planRepeat >= pi.plan.Repeat {
+		return pi.plan.Repeat - 1
+	}
+	return pi.planRepeat
+}
+
+func (pi *PlanIterator) PhaseIndex() int {
 	return pi.planRepeat
 }
