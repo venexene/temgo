@@ -2,10 +2,13 @@ package plan
 
 import "time"
 
-
 type Phase struct {
-	Type string
+	Type     string
 	Duration time.Duration
+	Name     string
+	Icon     string
+	Message  string
+	Color    string
 }
 
 type Section struct {
@@ -13,19 +16,18 @@ type Section struct {
 	Repeat int
 }
 
-
 type Builder struct {
 	sections []Section
-	repeat int
+	repeat   int
 }
 
 func NewBuilder() *Builder {
-	return &Builder{repeat:1}
+	return &Builder{repeat: 1}
 }
 
-func (b *Builder) AddPhase(name string, duration time.Duration) *Builder {
+func (b *Builder) AddPhase(phaseType string, duration time.Duration, name, icon, message, color string) *Builder {
 	b.sections = append(b.sections, Section{
-		Phases: []Phase{{name, duration}},
+		Phases: []Phase{{phaseType, duration, name, icon, message, color}},
 		Repeat: 1,
 	})
 	return b
@@ -34,7 +36,7 @@ func (b *Builder) AddPhase(name string, duration time.Duration) *Builder {
 func (b *Builder) AddRepeating(repeat int, phases ...Phase) *Builder {
 	b.sections = append(b.sections, Section{
 		Phases: phases,
-		Repeat: repeat, 
+		Repeat: repeat,
 	})
 	return b
 }
@@ -42,7 +44,7 @@ func (b *Builder) AddRepeating(repeat int, phases ...Phase) *Builder {
 func (b *Builder) AddSection(section Section) *Builder {
 	b.sections = append(b.sections, section)
 	return b
-} 
+}
 
 func (b *Builder) RepeatPlan(repeat int) *Builder {
 	b.repeat = repeat
@@ -56,59 +58,69 @@ func (b *Builder) Build() *Plan {
 
 	return &Plan{
 		Sections: b.sections,
-		Repeat: b.repeat,
+		Repeat:   b.repeat,
 	}
 }
 
-
 type Plan struct {
 	Sections []Section
-	Repeat int
+	Repeat   int
 }
 
 func ClassicPlan() *Plan {
 	return NewBuilder().
-    AddPhase("prolog", 10*time.Second).
-    AddRepeating(4,
-        Phase{"work", 25*time.Minute},
-        Phase{"rest", 5*time.Minute},
-    ).
-    AddPhase("longRest", 30*time.Minute).
-    RepeatPlan(3).  // 3 спринта
-    Build()
+		AddPhase("prolog", 10*time.Second,
+			"Prolog", "🚀", "Prepare to focus", "#00CED1").
+		AddRepeating(4,
+			Phase{Type: "work", Duration: 25 * time.Minute,
+				Name: "Work", Icon: "🧠", Message: "Stay focused", Color: "#00FF00"},
+			Phase{Type: "rest", Duration: 5 * time.Minute,
+				Name: "Rest", Icon: "☕", Message: "Take a break", Color: "#87CEEB"},
+		).
+		AddPhase("longRest", 30*time.Minute,
+			"Long Rest", "😴", "Great work! Long break", "#DDA0DD").
+		RepeatPlan(3).
+		Build()
 }
 
 func ShortPlan() *Plan {
-    return NewBuilder().
-        AddPhase("prolog", 10*time.Second).
-        AddRepeating(3,
-            Phase{"work", 15 * time.Minute},
-            Phase{"rest", 3 * time.Minute},
-        ).
-        AddPhase("longRest", 15*time.Minute).
-        RepeatPlan(2).
-        Build()
+	return NewBuilder().
+		AddPhase("prolog", 10*time.Second,
+			"Prolog", "🚀", "Prepare to focus", "#00CED1").
+		AddRepeating(3,
+			Phase{Type: "work", Duration: 15 * time.Minute,
+				Name: "Work", Icon: "🧠", Message: "Stay focused", Color: "#00FF00"},
+			Phase{Type: "rest", Duration: 3 * time.Minute,
+				Name: "Rest", Icon: "☕", Message: "Take a break", Color: "#87CEEB"},
+		).
+		AddPhase("longRest", 15*time.Minute,
+			"Long Rest", "😴", "Short break session done", "#DDA0DD").
+		RepeatPlan(2).
+		Build()
 }
 
 func LongPlan() *Plan {
-    return NewBuilder().
-        AddPhase("prolog", 10*time.Second).
-        AddRepeating(3,
-            Phase{"work", 50 * time.Minute},
-            Phase{"rest", 10 * time.Minute},
-        ).
-        AddPhase("longRest", 30*time.Minute).
-        RepeatPlan(2).
-        Build()
+	return NewBuilder().
+		AddPhase("prolog", 10*time.Second,
+			"Prolog", "🚀", "Prepare for deep work", "#00CED1").
+		AddRepeating(3,
+			Phase{Type: "work", Duration: 50 * time.Minute,
+				Name: "Deep Work", Icon: "🧠", Message: "Deep focus session", Color: "#00FF00"},
+			Phase{Type: "rest", Duration: 10 * time.Minute,
+				Name: "Rest", Icon: "☕", Message: "Step away, recharge", Color: "#87CEEB"},
+		).
+		AddPhase("longRest", 30*time.Minute,
+			"Long Rest", "😴", "Outstanding! Take a real break", "#DDA0DD").
+		RepeatPlan(2).
+		Build()
 }
-
 
 type PlanIterator struct {
 	plan *Plan
 
 	planRepeat int
 
-	sectionIndex int
+	sectionIndex  int
 	sectionRepeat int
 
 	phaseIndex int
@@ -116,11 +128,11 @@ type PlanIterator struct {
 
 func NewPlanIterator(plan *Plan) *PlanIterator {
 	return &PlanIterator{
-		plan: plan,
-		planRepeat: 0,
-		sectionIndex: 0,
+		plan:          plan,
+		planRepeat:    0,
+		sectionIndex:  0,
 		sectionRepeat: 0,
-		phaseIndex: 0,
+		phaseIndex:    0,
 	}
 }
 
@@ -150,8 +162,12 @@ func (pi *PlanIterator) Next() (Phase, bool) {
 }
 
 func (pi *PlanIterator) Reset() {
-    pi.planRepeat = 0
-    pi.sectionIndex = 0
-    pi.sectionRepeat = 0
-    pi.phaseIndex = 0
+	pi.planRepeat = 0
+	pi.sectionIndex = 0
+	pi.sectionRepeat = 0
+	pi.phaseIndex = 0
+}
+
+func (pi *PlanIterator) CurrentRepeat() int {
+	return pi.planRepeat
 }

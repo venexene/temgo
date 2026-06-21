@@ -11,13 +11,13 @@ import (
 )
 
 type WorkTimer struct {
-	plan *plan.Plan
+	plan    *plan.Plan
 	history *history.History
 }
 
 func NewWorkTimer(plan *plan.Plan, history *history.History) *WorkTimer {
 	return &WorkTimer{
-		plan: plan,
+		plan:    plan,
 		history: history,
 	}
 }
@@ -43,8 +43,8 @@ func (t *WorkTimer) run(ctx context.Context) {
 		deadline := start.Add(phase.Duration)
 		err := t.runPhase(ctx, deadline)
 		t.history.Add(history.Entry{
-			Type: phase.Type, 
-			Start: start,
+			Type:     phase.Type,
+			Start:    start,
 			Duration: int(time.Since(start).Seconds()),
 			Finished: err == nil,
 		})
@@ -59,13 +59,13 @@ func (t *WorkTimer) run(ctx context.Context) {
 func FormatDuration(t time.Duration) string {
 	seconds := int(t.Seconds())
 	if seconds >= 3600 {
-		return fmt.Sprintf("%d:%02d:%02d", seconds/3600,(seconds%3600)/60, seconds%60)
+		return fmt.Sprintf("%d:%02d:%02d", seconds/3600, (seconds%3600)/60, seconds%60)
 	} else {
 		return fmt.Sprintf("%02d:%02d", seconds/60, seconds%60)
 	}
 }
 
-func (t* WorkTimer) runPhase(ctx context.Context, deadline time.Time) error {
+func (t *WorkTimer) runPhase(ctx context.Context, deadline time.Time) error {
 	ticker := t.startTicker(deadline, ctx)
 	for remaining := range ticker {
 		fmt.Printf("%s\r", FormatDuration(remaining))
@@ -73,7 +73,6 @@ func (t* WorkTimer) runPhase(ctx context.Context, deadline time.Time) error {
 	fmt.Println("\a")
 	return ctx.Err()
 }
-
 
 func (t *WorkTimer) startTicker(deadline time.Time, ctx context.Context) <-chan time.Duration {
 	res := make(chan time.Duration)
@@ -89,7 +88,7 @@ func (t *WorkTimer) startTicker(deadline time.Time, ctx context.Context) <-chan 
 			select {
 			case <-ctx.Done():
 
-				return 
+				return
 			case res <- remaining:
 			}
 
@@ -98,10 +97,10 @@ func (t *WorkTimer) startTicker(deadline time.Time, ctx context.Context) <-chan 
 
 			select {
 			case <-ctx.Done():
-				return 
+				return
 			case <-time.After(time.Until(sleepUntil)):
 			}
 		}
-	} ()
+	}()
 	return res
 }

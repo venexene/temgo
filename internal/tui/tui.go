@@ -2,9 +2,10 @@ package tui
 
 import (
 	"context"
-	"time"
 	"fmt"
 	"os"
+	"strings"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -46,7 +47,7 @@ func (m Model) Init() tea.Cmd {
 	}
 }
 
-func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case initMsg:
 		phase, ok := m.iterator.Next()
@@ -104,26 +105,106 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 var (
-	phaseStyle  = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#00FF00"))
-	timerStyle  = lipgloss.NewStyle().Bold(true)
-	pausedStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFF00"))
-	hintStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#888888"))
+	boxStyle = lipgloss.NewStyle().
+			Border(lipgloss.DoubleBorder()).
+			BorderForeground(lipgloss.Color("#5A56E0")).
+			Padding(1, 3).
+			Align(lipgloss.Center, lipgloss.Center)
+
+	headerStyle   = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FFD700"))
+	messageStyle  = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FFFFFF"))
+	timerStyle    = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FFFFFF"))
+	pauseStyle    = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FFA500"))
+	hintKeyStyle  = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#5FD7FF"))
+	hintDescStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#888888"))
+	hintSepStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#444444"))
+	barEmptyStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#333333"))
 )
 
-func (m Model) View() string {
-	s := ""
-	s += phaseStyle.Render(m.currentPhase.Type)
-	s += "\n\n"
-	s += timerStyle.Render(timer.FormatDuration(m.remaining))
-	s += "\n\n"
-	if m.paused {
-		s += pausedStyle.Render("[PAUSED]") + "\n\n"
+func progressBar(elapsed, total time.Duration, width int, color lipgloss.Color) string {
+	if total <= 0 {
+		total = 1
 	}
-	s += hintStyle.Render("[q] quit  [space] pause  [s] skip")
-	return s
+	ratio := float64(elapsed) / float64(total)
+	if ratio > 1 {
+		ratio = 1
+	}
+	if ratio < 0 {
+		ratio = 0
+	}
+
+	filled := int(ratio * float64(width))
+	empty := width - filled
+
+	fullStyle := lipgloss.NewStyle().Foreground(color)
+	return fullStyle.Render(strings.Repeat("█", filled)) + barEmptyStyle.Render(strings.Repeat("░", empty))
 }
 
-func (m Model) switchPhase(finished bool) (tea.Model, tea.Cmd) {
+func formatHints(pairs ...string) string {
+	parts := make([]string, 0, len(pairs)/2)
+	for i := 0; i < len(pairs); i += 2 {
+		key := pairs[i]
+		desc := pairs[i+1]
+		parts = append(parts, hintKeyStyle.Render(key)+" "+hintDescStyle.Render(desc))
+	}
+	sep := "  " + hintSepStyle.Render("│") + "  "
+	return strings.Join(parts, sep)
+}
+
+func (m Model) View() string {
+	header := headerStyle.Render(fmt.Sprintf("%s %s %s", m.currentPhase.Icon, m.currentPhase.Name, m.currentPhase.Icon))
+
+	message := messageStyle.Render(m.currentPhase.Message)
+
+	timeStr := timerStyle.Render(timer.FormatDuration(m.remaining))
+
+	total := m.currentPhase.Duration
+	elapsed := total - m.remaining
+	bar := progressBar(elapsed, total, 30, lipgloss.Color(m.currentPhase.Color))
+
+	var pauseLine string
+	if m.paused {
+		pauseLine = pauseStyle.Render("⏸  PAUSED")
+	}
+
+	hints := formatHints(
+		"q", "quit",
+		"space", "pause",
+		"s", "skip",
+	)
+
+	content := lipgloss.JoinVertical(lipgloss.Center,
+		header,
+		"",
+		message,
+		"",
+		timeStr,
+		"",
+		bar,
+		"",
+		pauseLine,
+		"",
+		hints,
+	)
+
+	boxWidth := 50
+	if m.width > 0 && m.width-4 < boxWidth {
+		boxWidth = m.width - 4
+	}
+	if boxWidth < 32 {
+		boxWidth = 32
+	}
+
+	box := boxStyle.Width(boxWidth).Render(content)
+
+	if m.width == 0 || m.height == 0 {
+		return box
+	}
+
+	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, box)
+}
+
+func (m *Model) switchPhase(finished bool) (tea.Model, tea.Cmd) {
 	m.history.Add(history.Entry{
 		Type:     m.currentPhase.Type,
 		Start:    m.phaseStart,
