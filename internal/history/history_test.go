@@ -76,3 +76,37 @@ func TestHistory_EmptyFlush(t *testing.T) {
 		t.Fatalf("Flush empty history: %v", err)
 	}
 }
+
+func TestHistory_MultipleFlushes(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "test.jsonl")
+	h := NewHistory(path)
+
+	h.Add(Entry{Type: "work", Duration: 100, Finished: true})
+	if err := h.Flush(); err != nil {
+		t.Fatalf("flush 1: %v", err)
+	}
+
+	h.Add(Entry{Type: "rest", Duration: 50, Finished: false})
+	if err := h.Flush(); err != nil {
+		t.Fatalf("flush 2: %v", err)
+	}
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("ReadFile: %v", err)
+	}
+
+	lines := strings.Split(strings.TrimSpace(string(data)), "\n")
+	if len(lines) != 2 {
+		t.Fatalf("expected 2 lines after 2 flushes, got %d", len(lines))
+	}
+
+	var e1, e2 Entry
+	json.Unmarshal([]byte(lines[0]), &e1)
+	json.Unmarshal([]byte(lines[1]), &e2)
+
+	if e1.Type != "work" || e2.Type != "rest" {
+		t.Errorf("wrong order: %q, %q", e1.Type, e2.Type)
+	}
+}
