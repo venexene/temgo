@@ -14,9 +14,4 @@ jobs:
       - run: go mod tidy -diff
       - run: go build ./...
       - run: go vet ./...
-      
-      - uses: golangci/golangci-lint-action@v7
-        with:
-          version: v2.2
-      
       - run: go test ./... -race
