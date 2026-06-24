@@ -2,6 +2,7 @@ package timer
 
 import (
 	"context"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -9,6 +10,30 @@ import (
 	"github.com/venexene/temgo/internal/history"
 	"github.com/venexene/temgo/internal/plan"
 )
+
+func loadTestPlan(t *testing.T) *plan.Plan {
+	t.Helper()
+	json := `{
+	"sections": [
+		{
+		"phases": [
+			{"type": "work", "duration": "1s", "name": "W", "icon": "•", "message": "", "color": "#FFF"}
+		],
+		"repeat": 1
+		}
+	],
+	"repeat": 1
+	}`
+	path := filepath.Join(t.TempDir(), "plan.json")
+	if err := os.WriteFile(path, []byte(json), 0644); err != nil {
+		t.Fatal(err)
+	}
+	p, err := plan.LoadPlan(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return p
+}
 
 func TestTimer_DurationFormat(t *testing.T) {
 	tests := []struct {
@@ -37,7 +62,7 @@ func TestTimer_DurationFormat(t *testing.T) {
 
 func TestTimer_Cancellation(t *testing.T) {
 	dir := t.TempDir()
-	wt := NewWorkTimer(plan.ClassicPlan(), history.NewHistory(filepath.Join(dir, "test.jsonl")))
+	wt := NewWorkTimer(loadTestPlan(t), history.NewHistory(filepath.Join(dir, "test.jsonl")))
 
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -61,7 +86,7 @@ func TestTimer_Cancellation(t *testing.T) {
 }
 
 func TestWorkTimer_startTicker(t *testing.T) {
-	wt := NewWorkTimer(plan.ClassicPlan(), history.NewHistory(filepath.Join(t.TempDir(), "test.jsonl")))
+	wt := NewWorkTimer(loadTestPlan(t), history.NewHistory(filepath.Join(t.TempDir(), "test.jsonl")))
 
 	ctx := context.Background()
 	deadline := time.Now().Add(200 * time.Millisecond)
@@ -90,12 +115,12 @@ func TestWorkTimer_startTicker(t *testing.T) {
 }
 
 func TestWorkTimer_run_ctxBetweenPhases(t *testing.T) {
-	plan := plan.NewBuilder().
+	p := plan.NewBuilder().
 		AddPhase("p1", 5*time.Second, "P1", "•", "", "#FFF").
 		AddPhase("p2", 5*time.Second, "P2", "•", "", "#FFF").
 		Build()
 
-	wt := NewWorkTimer(plan, history.NewHistory(filepath.Join(t.TempDir(), "test.jsonl")))
+	wt := NewWorkTimer(p, history.NewHistory(filepath.Join(t.TempDir(), "test.jsonl")))
 
 	ctx, cancel := context.WithCancel(context.Background())
 

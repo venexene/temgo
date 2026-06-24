@@ -46,7 +46,7 @@ func (t *WorkTimer) run(ctx context.Context) {
 		}
 
 		start := time.Now()
-		deadline := start.Add(phase.Duration)
+		deadline := start.Add(time.Duration(phase.Duration))
 		err := t.runPhase(ctx, deadline)
 		t.history.Add(history.Entry{
 			Type:     phase.Type,
@@ -59,7 +59,7 @@ func (t *WorkTimer) run(ctx context.Context) {
 			return
 		}
 	}
-	fmt.Println("\nAll sprints done!")
+	fmt.Println("\nPlan is over!")
 }
 
 func FormatDuration(t time.Duration) string {

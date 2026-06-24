@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -15,7 +16,17 @@ import (
 	"github.com/venexene/temgo/internal/timer"
 )
 
+type state int 
+const (
+	stateSelecting state = iota
+	stateRunning
+)
+
 type Model struct {
+	state state
+	plans []planItem
+	cursor int
+
 	plan     *plan.Plan
 	iterator *plan.PlanIterator
 
@@ -40,6 +51,48 @@ func NewModel(plan *plan.Plan, iterator *plan.PlanIterator, history *history.His
 	}
 }
 
+type planItem struct {
+	name string
+	plan *plan.Plan
+}
+
+func (m *Model) loadPlans(dir string) {
+	files, err := os.ReadDir(dir)
+	if err != nil {
+		return
+	}
+
+	for _, file := range files {
+		if !file.IsDir() && strings.HasSuffix(file.Name(), ".json") {
+			plan, err := plan.LoadPlan(filepath.Join(dir, file.Name()))
+			if err != nil {
+				continue
+			}
+			m.plans = append(m.plans, planItem{
+				name: strings.TrimSuffix(file.Name(), ".json"),
+				plan: plan,
+			})
+		}
+	}
+}
+
+func (m *Model) startPlan() (tea.Model, tea.Cmd) {
+	m.plan = m.plans[m.cursor].plan
+	m.cursor = 0
+	m.iterator = plan.NewPlanIterator(m.plan)
+	phase, ok := m.iterator.Next()
+	if !ok {
+		return m, tea.Quit
+	}
+	m.currentPhase = phase
+	m.remaining = time.Duration(phase.Duration)
+	m.phaseStart = time.Now()
+	m.paused = true
+	m.phaseNum = 1
+	m.state = stateRunning
+	return m, nil
+}
+
 type initMsg struct{}
 
 func (m Model) Init() tea.Cmd {
@@ -48,20 +101,8 @@ func (m Model) Init() tea.Cmd {
 	}
 }
 
-func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *Model) updateTimer(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case initMsg:
-		phase, ok := m.iterator.Next()
-		if !ok {
-			return m, tea.Quit
-		}
-		m.currentPhase = phase
-		m.remaining = phase.Duration
-		m.phaseStart = time.Now()
-		m.paused = true
-		m.phaseNum = 1
-		return m, nil
-
 	case tickMsg:
 		if m.paused {
 			return m, nil
@@ -91,7 +132,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if err := m.history.Flush(); err != nil {
 					fmt.Fprintf(os.Stderr, "temgo: %v\n", err)
 				}
-				return m, tea.Quit
+				m.state = stateSelecting
+				return m, nil
 			case "s":
 				m.remaining = 0
 				return m.switchPhase(false)
@@ -106,6 +148,46 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+func (m *Model) updateSelector(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "up":
+			if m.cursor > 0 {
+				m.cursor--
+			}
+		case "down":
+			if m.cursor < len(m.plans)-1 {
+                m.cursor++
+            }
+		case "enter":
+			return m.startPlan()
+		case "q":
+			return m, tea.Quit
+		}
+	case tea.WindowSizeMsg:
+		m.width = msg.Width
+		m.height = msg.Height
+	}
+
+	return m, nil
+}
+
+func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case initMsg:
+		m.loadPlans("plans")
+		m.loadPlans(".temgo/plans")
+		m.state = stateSelecting
+	default:
+		if m.state ==stateSelecting {
+			return m.updateSelector(msg)
+		}
+		return m.updateTimer(msg)
+	}
+	return m, nil
+}
+
 var (
 	boxStyle = lipgloss.NewStyle().
 			Border(lipgloss.DoubleBorder()).
@@ -113,6 +195,7 @@ var (
 			Padding(1, 3).
 			Align(lipgloss.Center, lipgloss.Center)
 
+	titleStyle   = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FFD700"))	
 	counterStyle  = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#AAAAAA"))
 	headerStyle   = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FFD700"))
 	messageStyle  = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FFFFFF"))
@@ -154,7 +237,7 @@ func formatHints(pairs ...string) string {
 	return strings.Join(parts, sep)
 }
 
-func (m Model) View() string {
+func (m Model) viewTimer() string {
 	totalPhases := m.plan.PhasesPerCycle()
 	cycle := m.iterator.CurrentRepeat() + 1
 	counter := counterStyle.Render(fmt.Sprintf("Phase %d/%d  ·  Cycle %d/%d", m.phaseNum, totalPhases, cycle, m.plan.Repeat))
@@ -165,7 +248,7 @@ func (m Model) View() string {
 
 	timeStr := timerStyle.Render(timer.FormatDuration(m.remaining))
 
-	total := m.currentPhase.Duration
+	total := time.Duration(m.currentPhase.Duration)
 	elapsed := total - m.remaining
 	bar := progressBar(elapsed, total, 30, lipgloss.Color(m.currentPhase.Color))
 
@@ -213,6 +296,43 @@ func (m Model) View() string {
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, box)
 }
 
+func (m Model) viewSelector() string {
+    var lines []string
+    lines = append(lines, titleStyle.Render("Select Plan"))
+
+    for i, item := range m.plans {
+        prefix := "  "
+        if i == m.cursor {
+            prefix = "> "
+        }
+        lines = append(lines, prefix+item.name)
+    }
+
+	hints := formatHints(
+		"↑↓", "choose",
+		"enter", "confirm",
+		"q", "quit",
+	)
+
+    lines = append(lines, "", hints)
+
+    content := lipgloss.JoinVertical(lipgloss.Left, lines...)
+    box := boxStyle.Width(40).Render(content)
+
+	if m.width == 0 || m.height == 0 {
+		return box
+	}
+
+    return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, box)
+}
+
+func (m Model) View() string {
+	if m.state == stateSelecting {
+		return m.viewSelector()
+	}
+	return m.viewTimer()
+}
+
 func (m *Model) switchPhase(finished bool) (tea.Model, tea.Cmd) {
 	m.history.Add(history.Entry{
 		Type:     m.currentPhase.Type,
@@ -223,11 +343,12 @@ func (m *Model) switchPhase(finished bool) (tea.Model, tea.Cmd) {
 
 	newPhase, ok := m.iterator.Next()
 	if !ok {
-		return m, tea.Quit
+		m.state = stateSelecting
+		return m, nil
 	}
 
 	m.currentPhase = newPhase
-	m.remaining = newPhase.Duration
+	m.remaining = time.Duration(newPhase.Duration)
 	m.phaseStart = time.Now()
 
 	m.phaseNum++

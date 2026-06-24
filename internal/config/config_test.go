@@ -1,6 +1,7 @@
 package config
 
 import (
+	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
@@ -8,7 +9,23 @@ import (
 	"github.com/venexene/temgo/internal/plan"
 )
 
+func init() {
+	PlansDir = filepath.Join("..", "..", "plans")
+}
+
+func loadTestPlan(name string) *plan.Plan {
+	p, err := plan.LoadPlan(filepath.Join(PlansDir, name+".json"))
+	if err != nil {
+		panic(err)
+	}
+	return p
+}
+
 func TestParseFlags(t *testing.T) {
+	classic := loadTestPlan("classic")
+	short := loadTestPlan("short")
+	long := loadTestPlan("long")
+
 	tests := []struct {
 		name    string
 		args    []string
@@ -19,22 +36,22 @@ func TestParseFlags(t *testing.T) {
 		{
 			name: "no args returns classic",
 			args: []string{},
-			want: presets["classic"],
+			want: classic,
 		},
 		{
 			name: "classic explicitly",
 			args: []string{"-P", "classic"},
-			want: presets["classic"],
+			want: classic,
 		},
 		{
 			name: "short preset",
 			args: []string{"-P", "short"},
-			want: presets["short"],
+			want: short,
 		},
 		{
 			name: "long preset",
 			args: []string{"-P", "long"},
-			want: presets["long"],
+			want: long,
 		},
 		{
 			name:    "unknown preset",
@@ -55,7 +72,7 @@ func TestParseFlags(t *testing.T) {
 		{
 			name: "extra args ignored",
 			args: []string{"-P", "short", "extra"},
-			want: presets["short"],
+			want: short,
 		},
 	}
 
@@ -83,13 +100,5 @@ func TestParseFlags(t *testing.T) {
 				t.Errorf("plan mismatch:\n got  %+v\n want %+v", got, tt.want)
 			}
 		})
-	}
-}
-
-func TestParseFlags_ReturnsSameInstance(t *testing.T) {
-	a, _ := ParseFlags([]string{"-P", "classic"})
-	b, _ := ParseFlags([]string{"-P", "classic"})
-	if a != b {
-		t.Error("ParseFlags should return the same preset instance")
 	}
 }

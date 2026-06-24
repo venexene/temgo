@@ -1,0 +1,24 @@
+{
+  "sections": [
+    {
+      "phases": [
+        {"type": "prolog", "duration": "10s", "name": "Prolog", "icon": "🚀", "message": "Prepare to focus", "color": "#00CED1"}
+      ],
+      "repeat": 1
+    },
+    {
+      "phases": [
+        {"type": "work", "duration": "25m", "name": "Work", "icon": "🧠", "message": "Stay focused", "color": "#00FF00"},
+        {"type": "rest", "duration": "5m", "name": "Rest", "icon": "☕", "message": "Take a break", "color": "#87CEEB"}
+      ],
+      "repeat": 4
+    },
+    {
+      "phases": [
+        {"type": "longRest", "duration": "30m", "name": "Long Rest", "icon": "😴", "message": "Great work! Long break", "color": "#DDA0DD"}
+      ],
+      "repeat": 1
+    }
+  ],
+  "repeat": 3
+}

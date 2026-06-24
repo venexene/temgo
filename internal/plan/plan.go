@@ -1,19 +1,24 @@
 package plan
 
-import "time"
+import (
+	"encoding/json"
+	"errors"
+	"os"
+	"time"
+)
 
 type Phase struct {
-	Type     string
-	Duration time.Duration
-	Name     string
-	Icon     string
-	Message  string
-	Color    string
+	Type     string   `json:"type"`
+	Duration Duration `json:"duration"`
+	Name     string   `json:"name"`
+	Icon     string   `json:"icon"`
+	Message  string   `json:"message"`
+	Color    string   `json:"color"`
 }
 
 type Section struct {
-	Phases []Phase
-	Repeat int
+	Phases []Phase `json:"phases"`
+	Repeat int     `json:"repeat"`
 }
 
 type Builder struct {
@@ -27,7 +32,7 @@ func NewBuilder() *Builder {
 
 func (b *Builder) AddPhase(phaseType string, duration time.Duration, name, icon, message, color string) *Builder {
 	b.sections = append(b.sections, Section{
-		Phases: []Phase{{phaseType, duration, name, icon, message, color}},
+		Phases: []Phase{{phaseType, Duration(duration), name, icon, message, color}},
 		Repeat: 1,
 	})
 	return b
@@ -63,8 +68,18 @@ func (b *Builder) Build() *Plan {
 }
 
 type Plan struct {
-	Sections []Section
-	Repeat   int
+	Sections []Section `json:"sections"`
+	Repeat   int       `json:"repeat"`
+}
+
+func (p *Plan) Validate() error {
+	if len(p.Sections) == 0 {
+		return errors.New("plan has no sections")
+	}
+	if p.Repeat < 1 {
+		return errors.New("repeat must be >= 1")
+	}
+	return nil
 }
 
 func (p *Plan) PhasesPerCycle() int {
@@ -75,114 +90,23 @@ func (p *Plan) PhasesPerCycle() int {
 	return total
 }
 
-func ClassicPlan() *Plan {
-	return NewBuilder().
-		AddPhase("prolog", 10*time.Second,
-			"Prolog", "🚀", "Prepare to focus", "#00CED1").
-		AddRepeating(4,
-			Phase{Type: "work", Duration: 25 * time.Minute,
-				Name: "Work", Icon: "🧠", Message: "Stay focused", Color: "#00FF00"},
-			Phase{Type: "rest", Duration: 5 * time.Minute,
-				Name: "Rest", Icon: "☕", Message: "Take a break", Color: "#87CEEB"},
-		).
-		AddPhase("longRest", 30*time.Minute,
-			"Long Rest", "😴", "Great work! Long break", "#DDA0DD").
-		RepeatPlan(3).
-		Build()
-}
-
-func ShortPlan() *Plan {
-	return NewBuilder().
-		AddPhase("prolog", 10*time.Second,
-			"Prolog", "🚀", "Prepare to focus", "#00CED1").
-		AddRepeating(3,
-			Phase{Type: "work", Duration: 15 * time.Minute,
-				Name: "Work", Icon: "🧠", Message: "Stay focused", Color: "#00FF00"},
-			Phase{Type: "rest", Duration: 3 * time.Minute,
-				Name: "Rest", Icon: "☕", Message: "Take a break", Color: "#87CEEB"},
-		).
-		AddPhase("longRest", 15*time.Minute,
-			"Long Rest", "😴", "Short break session done", "#DDA0DD").
-		RepeatPlan(2).
-		Build()
-}
-
-func LongPlan() *Plan {
-	return NewBuilder().
-		AddPhase("prolog", 10*time.Second,
-			"Prolog", "🚀", "Prepare for deep work", "#00CED1").
-		AddRepeating(3,
-			Phase{Type: "work", Duration: 50 * time.Minute,
-				Name: "Deep Work", Icon: "🧠", Message: "Deep focus session", Color: "#00FF00"},
-			Phase{Type: "rest", Duration: 10 * time.Minute,
-				Name: "Rest", Icon: "☕", Message: "Step away, recharge", Color: "#87CEEB"},
-		).
-		AddPhase("longRest", 30*time.Minute,
-			"Long Rest", "😴", "Outstanding! Take a real break", "#DDA0DD").
-		RepeatPlan(2).
-		Build()
-}
-
-type PlanIterator struct {
-	plan *Plan
-
-	planRepeat int
-
-	sectionIndex  int
-	sectionRepeat int
-
-	phaseIndex int
-}
-
-func NewPlanIterator(plan *Plan) *PlanIterator {
-	return &PlanIterator{
-		plan:          plan,
-		planRepeat:    0,
-		sectionIndex:  0,
-		sectionRepeat: 0,
-		phaseIndex:    0,
+func LoadPlan(filepath string) (*Plan, error) {
+	file, err := os.Open(filepath)
+	if err != nil {
+		return nil, err
 	}
-}
+	defer file.Close()
 
-func (pi *PlanIterator) Next() (Phase, bool) {
-	if pi.planRepeat >= pi.plan.Repeat {
-		return Phase{}, false
+	var plan Plan
+	decoder := json.NewDecoder(file)
+	err = decoder.Decode(&plan)
+	if err != nil {
+		return nil, err
 	}
 
-	section := pi.plan.Sections[pi.sectionIndex]
-	phase := section.Phases[pi.phaseIndex]
-
-	pi.phaseIndex++
-	if pi.phaseIndex >= len(section.Phases) {
-		pi.sectionRepeat++
-		pi.phaseIndex = 0
-		if pi.sectionRepeat >= section.Repeat {
-			pi.sectionIndex++
-			pi.sectionRepeat = 0
-			if pi.sectionIndex >= len(pi.plan.Sections) {
-				pi.planRepeat++
-				pi.sectionIndex = 0
-			}
-		}
+	if err := plan.Validate(); err != nil {
+		return nil, err
 	}
 
-	return phase, true
-}
-
-func (pi *PlanIterator) Reset() {
-	pi.planRepeat = 0
-	pi.sectionIndex = 0
-	pi.sectionRepeat = 0
-	pi.phaseIndex = 0
-}
-
-func (pi *PlanIterator) CurrentRepeat() int {
-	if pi.planRepeat >= pi.plan.Repeat {
-		return pi.plan.Repeat - 1
-	}
-	return pi.planRepeat
-}
-
-func (pi *PlanIterator) PhaseIndex() int {
-	return pi.planRepeat
+	return &plan, nil
 }
