@@ -1,8 +1,8 @@
 .PHONY: build test clean install
 
 build:
-	go build -o temgo ./cmd/cli
-	go build -o temgo-tui ./cmd/tui
+	go build -o temgo ./cmd/temgo
+	go build -o temgo-tui ./cmd/temgo-tui
 
 test:
 	go test -race ./...
@@ -11,5 +11,5 @@ clean:
 	rm -f temgo temgo-tui
 
 install:
-	go install ./cmd/cli
-	go install ./cmd/tui
+	go install ./cmd/temgo
+	go install ./cmd/temgo-tui

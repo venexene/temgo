@@ -78,6 +78,33 @@ func (m *Model) loadPlans(dir string) {
 	}
 }
 
+func (m *Model) loadEmbeddedPlans() {
+	names := plan.ListEmbeddedPlanNames()
+
+	for _, name := range names {
+		plan, err := plan.LoadEmbeddedPlan(name)
+		if err != nil {
+			continue
+		}
+
+		isDuplicate := false
+		for _, item := range m.plans {
+			if item.name == name {
+				isDuplicate = true
+				break
+			}
+		}
+		if isDuplicate {
+			continue
+		}
+
+		m.plans = append(m.plans, planItem{
+			name: name,
+			plan: plan,
+		})
+	}
+}
+
 func (m *Model) startPlan() (tea.Model, tea.Cmd) {
 	m.plan = m.plans[m.cursor].plan
 	m.cursor = 0
@@ -178,8 +205,8 @@ func (m *Model) updateSelector(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case initMsg:
-		m.loadPlans("plans")
 		m.loadPlans(".temgo/plans")
+		m.loadEmbeddedPlans()
 		m.state = stateSelecting
 	default:
 		if m.state == stateSelecting {

@@ -7,8 +7,15 @@
 ```
 git clone https://github.com/venexene/temgo
 cd temgo
-go build -o temgo ./cmd/cli
-go build -o temgo-tui ./cmd/tui
+go build -o temgo ./cmd/temgo
+go build -o temgo-tui ./cmd/temgo-tui
+```
+
+Или через `go install`:
+
+```
+go install github.com/venexene/temgo/cmd/temgo@latest
+go install github.com/venexene/temgo/cmd/temgo-tui@latest
 ```
 
 ## CLI
@@ -67,8 +74,8 @@ temgo-tui
 ## Структура
 
 ```
-cmd/cli              точка входа CLI
-cmd/tui              точка входа TUI (Bubble Tea + Lipgloss)
+cmd/temgo            точка входа CLI
+cmd/temgo-tui        точка входа TUI (Bubble Tea + Lipgloss)
 internal/
   plan               фазы, секции, итератор, строитель, загрузка JSON
   timer              движок таймера, остановка по контексту

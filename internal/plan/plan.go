@@ -1,9 +1,12 @@
 package plan
 
 import (
+	"embed"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -110,4 +113,37 @@ func LoadPlan(filepath string) (*Plan, error) {
 	}
 
 	return &plan, nil
+}
+
+//go:embed plans/*.json
+var embeddedPlans embed.FS
+
+func LoadEmbeddedPlan(filename string) (*Plan, error) {
+	file, err := embeddedPlans.ReadFile(fmt.Sprintf("plans/%s.json", filename))
+	if err != nil {
+		return nil, err
+	}
+	var plan Plan
+	json.Unmarshal(file, &plan)
+	if err := plan.Validate(); err != nil {
+		return nil, err
+	}
+	return &plan, nil
+}
+
+func ListEmbeddedPlanNames() []string {
+	entries, err := embeddedPlans.ReadDir("plans")
+	if err != nil {
+		return nil
+	}
+
+	var names []string
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		names = append(names, strings.TrimSuffix(entry.Name(), ".json"))
+	}
+
+	return names
 }
