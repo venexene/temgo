@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/venexene/temgo/internal/plan"
 )
 
 func TestParseFlags_EmbeddedPresets(t *testing.T) {
@@ -81,9 +83,9 @@ func TestParseFlags_DiskFallback(t *testing.T) {
 	}`
 	os.WriteFile(filepath.Join(plansDir, "test.json"), []byte(json), 0644)
 
-	old := PlansDir
-	PlansDir = plansDir
-	defer func() { PlansDir = old }()
+	old := plan.DataDir
+	plan.DataDir = dir
+	defer func() { plan.DataDir = old }()
 
 	got, err := ParseFlags([]string{"-P", "test"})
 	if err != nil {
@@ -105,9 +107,9 @@ func TestParseFlags_EmbeddedWinsOverDisk(t *testing.T) {
 	json := `{"sections": [], "repeat": 1}`
 	os.WriteFile(filepath.Join(plansDir, "classic.json"), []byte(json), 0644)
 
-	old := PlansDir
-	PlansDir = plansDir
-	defer func() { PlansDir = old }()
+	old := plan.DataDir
+	plan.DataDir = dir
+	defer func() { plan.DataDir = old }()
 
 	got, err := ParseFlags([]string{"-P", "classic"})
 	if err != nil {

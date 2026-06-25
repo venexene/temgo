@@ -6,11 +6,12 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/venexene/temgo/internal/history"
+	"github.com/venexene/temgo/internal/plan"
 	"github.com/venexene/temgo/internal/tui"
 )
 
 func main() {
-	hist := history.NewHistory(".temgo/history.jsonl")
+	hist := history.NewHistory(plan.HistoryPath())
 
 	model := tui.NewModel(nil, nil, hist)
 

@@ -9,8 +9,8 @@ import (
 
 	"github.com/venexene/temgo/internal/config"
 	"github.com/venexene/temgo/internal/history"
-	"github.com/venexene/temgo/internal/timer"
 	"github.com/venexene/temgo/internal/plan"
+	"github.com/venexene/temgo/internal/timer"
 )
 
 func main() {
@@ -30,14 +30,14 @@ func main() {
 
 	fmt.Println("Welcome to Temgo!")
 
-	plan, err := config.ParseFlags(os.Args[1:])
+	p, err := config.ParseFlags(os.Args[1:])
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "temgo: %v\n", err)
 		os.Exit(2)
 	}
 
-	history := history.NewHistory(".temgo/history.jsonl")
-	wt := timer.NewWorkTimer(plan, history)
+	history := history.NewHistory(plan.HistoryPath())
+	wt := timer.NewWorkTimer(p, history)
 
 	if err := wt.Start(ctx); err != nil {
 		fmt.Fprintf(os.Stderr, "temgo: %v\n", err)

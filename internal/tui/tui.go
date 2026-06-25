@@ -205,7 +205,7 @@ func (m *Model) updateSelector(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case initMsg:
-		m.loadPlans(".temgo/plans")
+		m.loadPlans(plan.PlansDir())
 		m.loadEmbeddedPlans()
 		m.state = stateSelecting
 	default:

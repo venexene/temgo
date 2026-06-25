@@ -9,8 +9,6 @@ import (
 	"github.com/venexene/temgo/internal/plan"
 )
 
-var PlansDir = ".temgo/plans"
-
 func ParseFlags(args []string) (*plan.Plan, error) {
 	fs := flag.NewFlagSet("temgo", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
@@ -30,7 +28,7 @@ func ParseFlags(args []string) (*plan.Plan, error) {
 		return p, nil
 	}
 
-	path := filepath.Join(PlansDir, *presetName+".json")
+	path := filepath.Join(plan.PlansDir(), *presetName+".json")
 	p, err = plan.LoadPlan(path)
 	if err != nil {
 		return nil, fmt.Errorf("unknown preset: %s (use: classic, short, long)", *presetName)
