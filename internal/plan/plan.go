@@ -123,8 +123,12 @@ func LoadEmbeddedPlan(filename string) (*Plan, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	var plan Plan
-	json.Unmarshal(file, &plan)
+	if err := json.Unmarshal(file, &plan); err != nil {
+		return nil, err
+	}
+
 	if err := plan.Validate(); err != nil {
 		return nil, err
 	}

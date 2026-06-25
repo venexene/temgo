@@ -5,17 +5,16 @@
 ## Установка
 
 ```
-git clone https://github.com/venexene/temgo
-cd temgo
-go build -o temgo ./cmd/temgo
-go build -o temgo-tui ./cmd/temgo-tui
-```
-
-Или через `go install`:
-
-```
 go install github.com/venexene/temgo/cmd/temgo@latest
 go install github.com/venexene/temgo/cmd/temgo-tui@latest
+```
+
+Или из исходников:
+
+```
+git clone https://github.com/venexene/temgo
+cd temgo
+make build
 ```
 
 ## CLI
@@ -35,7 +34,7 @@ temgo --add my-plan.json # импорт своего плана в .temgo/plans/
 temgo-tui
 ```
 
-При запуске – список планов из `plans/` и `.temgo/plans/`. Стрелки – выбор, Enter – запуск.
+При запуске – список планов: три встроенных плюс пользовательские из `.temgo/plans/`. Стрелки – выбор, Enter – запуск.
 
 Экран таймера:
 - счетчик фазы и цикла
@@ -63,13 +62,45 @@ temgo-tui
 - **short** – 3×(15мин + 3мин) → отдых 15мин, ×2
 - **long** – 3×(50мин + 10мин) → отдых 30мин, ×2
 
-Структура фазы:
+Поля фазы:
+
+| Поле | Назначение |
+|------|-----------|
+| `type` | идентификатор |
+| `duration` | длительность: `"25m"`, `"10s"`, `"1h30m"` |
+| `name` | название, показывается в TUI |
+| `icon` | эмодзи, отображается в заголовке |
+| `text` | текст на экране таймера |
+| `message` | текст в системном уведомлении при смене фазы |
+| `color` | цвет прогресс-бара, HEX |
+
+Поля плана:
+
+| Поле | Назначение |
+|------|-----------|
+| `sections` | список секций, выполняются по порядку |
+| `sections[].phases` | фазы внутри секции |
+| `sections[].repeat` | сколько раз повторить секцию |
+| `repeat` | сколько раз повторить весь план |
+
+Минимальный пример целого плана:
 
 ```json
-{"type": "work", "duration": "30m", "name": "Coding", "icon": "💻", "message": "Write code", "color": "#00FF00"}
+{
+  "sections": [
+    {
+      "phases": [
+        {"type": "work", "duration": "30m", "name": "Coding", "icon": "💻", "text": "Focus", "message": "Go!", "color": "#00FF00"},
+        {"type": "rest", "duration": "10m", "name": "Break",  "icon": "☕", "text": "Relax", "message": "Pause", "color": "#87CEEB"}
+      ],
+      "repeat": 2
+    }
+  ],
+  "repeat": 1
+}
 ```
 
-Пользовательские планы: `plans/` или `.temgo/plans/`. TUI подхватывает обе папки. CLI-импорт: `temgo --add file.json`.
+Пользовательские планы кладутся в `.temgo/plans/`. CLI-импорт: `temgo --add file.json`. TUI подхватывает их автоматически.
 
 ## Структура
 
@@ -77,17 +108,17 @@ temgo-tui
 cmd/temgo            точка входа CLI
 cmd/temgo-tui        точка входа TUI (Bubble Tea + Lipgloss)
 internal/
-  plan               фазы, секции, итератор, строитель, загрузка JSON
+  plan               фазы, секции, итератор, строитель, встроенные планы
   timer              движок таймера, остановка по контексту
   tui                Bubble Tea Model: выбор плана, таймер, рендер
   history            журнал сессий в JSONL
   config             флаги CLI, имена пресетов
-plans/               встроенные пресеты
 ```
 
 Архитектура:
-- `PlanIterator` – обход секций и повторов: `Next()` возвращает фазу или `false`.
+- `PlanIterator` – обход секций и повторов.
 - `Builder` – fluent API для создания планов в коде.
+- Встроенные пресеты через `//go:embed` – бинарник самодостаточен, работает из любой папки.
 - Остановка через контекст: `signal.NotifyContext` в CLI, `tea.Quit` в TUI. История в обоих случаях дописывается на диск.
 - TUI – трёхслойный рендеринг: `JoinVertical` (строки) → `boxStyle.Render` (рамка) → `lipgloss.Place` (позиция).
 

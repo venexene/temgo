@@ -35,10 +35,8 @@ func (t *WorkTimer) Start(ctx context.Context) error {
 func (t *WorkTimer) run(ctx context.Context) {
 	iter := plan.NewPlanIterator(t.plan)
 	for {
-		select {
-		case <-ctx.Done():
+		if ctx.Err() != nil {
 			return
-		default:
 		}
 
 		phase, ok := iter.Next()

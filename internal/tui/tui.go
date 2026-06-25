@@ -271,7 +271,7 @@ func (m Model) viewTimer() string {
 	cycle := m.iterator.CurrentRepeat() + 1
 	counter := counterStyle.Render(fmt.Sprintf("Phase %d/%d  ·  Cycle %d/%d", m.phaseNum, totalPhases, cycle, m.plan.Repeat))
 
-	header := headerStyle.Render(fmt.Sprintf("%s %s %s", m.currentPhase.Icon, m.currentPhase.Name, m.currentPhase.Icon))
+	header := headerStyle.Render(fmt.Sprintf("%s %s", m.currentPhase.Icon, m.currentPhase.Name))
 
 	text := textStyle.Render(m.currentPhase.Text)
 
