@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"time"
+	"github.com/gen2brain/beeep"
 
 	"github.com/venexene/temgo/internal/history"
 	"github.com/venexene/temgo/internal/plan"
@@ -58,6 +59,8 @@ func (t *WorkTimer) run(ctx context.Context) {
 			fmt.Println("\nInterrupted")
 			return
 		}
+		beeep.Beep(beeep.DefaultFreq, beeep.DefaultDuration)
+		beeep.Notify("temgo", phase.Message, "")
 	}
 	fmt.Println("\nPlan is over!")
 }
@@ -76,7 +79,6 @@ func (t *WorkTimer) runPhase(ctx context.Context, deadline time.Time) error {
 	for remaining := range ticker {
 		fmt.Printf("%s\r", FormatDuration(remaining))
 	}
-	fmt.Println("\a")
 	return ctx.Err()
 }
 

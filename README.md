@@ -62,7 +62,7 @@ temgo-tui
 {"type": "work", "duration": "30m", "name": "Coding", "icon": "💻", "message": "Write code", "color": "#00FF00"}
 ```
 
-Пользовательские планы: `plans/` (рядом с пресетами) или `.temgo/plans/` (вне гита). TUI подхватывает обе папки. CLI-импорт: `temgo --add file.json`.
+Пользовательские планы: `plans/` или `.temgo/plans/`. TUI подхватывает обе папки. CLI-импорт: `temgo --add file.json`.
 
 ## Структура
 

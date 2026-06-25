@@ -12,6 +12,7 @@ type Phase struct {
 	Duration Duration `json:"duration"`
 	Name     string   `json:"name"`
 	Icon     string   `json:"icon"`
+	Text     string   `json:"text"`
 	Message  string   `json:"message"`
 	Color    string   `json:"color"`
 }
@@ -30,9 +31,9 @@ func NewBuilder() *Builder {
 	return &Builder{repeat: 1}
 }
 
-func (b *Builder) AddPhase(phaseType string, duration time.Duration, name, icon, message, color string) *Builder {
+func (b *Builder) AddPhase(phaseType string, duration time.Duration, name, icon, text, message, color string) *Builder {
 	b.sections = append(b.sections, Section{
-		Phases: []Phase{{phaseType, Duration(duration), name, icon, message, color}},
+		Phases: []Phase{{phaseType, Duration(duration), name, icon, text, message, color}},
 		Repeat: 1,
 	})
 	return b

@@ -17,7 +17,7 @@ func loadTestPlan(t *testing.T) *plan.Plan {
 	"sections": [
 		{
 		"phases": [
-			{"type": "work", "duration": "1s", "name": "W", "icon": "•", "message": "", "color": "#FFF"}
+			{"type": "work", "duration": "1s", "name": "W", "icon": "•", "text": "", "message": "", "color": "#FFF"}
 		],
 		"repeat": 1
 		}
@@ -116,8 +116,8 @@ func TestWorkTimer_startTicker(t *testing.T) {
 
 func TestWorkTimer_run_ctxBetweenPhases(t *testing.T) {
 	p := plan.NewBuilder().
-		AddPhase("p1", 5*time.Second, "P1", "•", "", "#FFF").
-		AddPhase("p2", 5*time.Second, "P2", "•", "", "#FFF").
+		AddPhase("p1", 5*time.Second, "P1", "•", "", "", "#FFF").
+		AddPhase("p2", 5*time.Second, "P2", "•", "", "", "#FFF").
 		Build()
 
 	wt := NewWorkTimer(p, history.NewHistory(filepath.Join(t.TempDir(), "test.jsonl")))

@@ -10,21 +10,23 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/gen2brain/beeep"
 
 	"github.com/venexene/temgo/internal/history"
 	"github.com/venexene/temgo/internal/plan"
 	"github.com/venexene/temgo/internal/timer"
 )
 
-type state int 
+type state int
+
 const (
 	stateSelecting state = iota
 	stateRunning
 )
 
 type Model struct {
-	state state
-	plans []planItem
+	state  state
+	plans  []planItem
 	cursor int
 
 	plan     *plan.Plan
@@ -158,8 +160,8 @@ func (m *Model) updateSelector(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "down":
 			if m.cursor < len(m.plans)-1 {
-                m.cursor++
-            }
+				m.cursor++
+			}
 		case "enter":
 			return m.startPlan()
 		case "q":
@@ -180,7 +182,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.loadPlans(".temgo/plans")
 		m.state = stateSelecting
 	default:
-		if m.state ==stateSelecting {
+		if m.state == stateSelecting {
 			return m.updateSelector(msg)
 		}
 		return m.updateTimer(msg)
@@ -195,10 +197,10 @@ var (
 			Padding(1, 3).
 			Align(lipgloss.Center, lipgloss.Center)
 
-	titleStyle   = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FFD700"))	
+	titleStyle    = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FFD700"))
 	counterStyle  = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#AAAAAA"))
 	headerStyle   = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FFD700"))
-	messageStyle  = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FFFFFF"))
+	textStyle     = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FFFFFF"))
 	timerStyle    = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FFFFFF"))
 	pauseStyle    = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FFA500"))
 	hintKeyStyle  = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#5FD7FF"))
@@ -244,7 +246,7 @@ func (m Model) viewTimer() string {
 
 	header := headerStyle.Render(fmt.Sprintf("%s %s %s", m.currentPhase.Icon, m.currentPhase.Name, m.currentPhase.Icon))
 
-	message := messageStyle.Render(m.currentPhase.Message)
+	text := textStyle.Render(m.currentPhase.Text)
 
 	timeStr := timerStyle.Render(timer.FormatDuration(m.remaining))
 
@@ -268,7 +270,7 @@ func (m Model) viewTimer() string {
 		"",
 		header,
 		"",
-		message,
+		text,
 		"",
 		timeStr,
 		"",
@@ -297,16 +299,16 @@ func (m Model) viewTimer() string {
 }
 
 func (m Model) viewSelector() string {
-    var lines []string
-    lines = append(lines, titleStyle.Render("Select Plan"))
+	var lines []string
+	lines = append(lines, titleStyle.Render("Select Plan"))
 
-    for i, item := range m.plans {
-        prefix := "  "
-        if i == m.cursor {
-            prefix = "> "
-        }
-        lines = append(lines, prefix+item.name)
-    }
+	for i, item := range m.plans {
+		prefix := "  "
+		if i == m.cursor {
+			prefix = "> "
+		}
+		lines = append(lines, prefix+item.name)
+	}
 
 	hints := formatHints(
 		"↑↓", "choose",
@@ -314,16 +316,24 @@ func (m Model) viewSelector() string {
 		"q", "quit",
 	)
 
-    lines = append(lines, "", hints)
+	lines = append(lines, "", hints)
 
-    content := lipgloss.JoinVertical(lipgloss.Left, lines...)
-    box := boxStyle.Width(40).Render(content)
+	content := lipgloss.JoinVertical(lipgloss.Center, lines...)
+
+	boxWidth := 50
+	if m.width > 0 && m.width-4 < boxWidth {
+		boxWidth = m.width - 4
+	}
+	if boxWidth < 32 {
+		boxWidth = 32
+	}
+	box := boxStyle.Width(boxWidth).Render(content)
 
 	if m.width == 0 || m.height == 0 {
 		return box
 	}
 
-    return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, box)
+	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, box)
 }
 
 func (m Model) View() string {
@@ -346,6 +356,9 @@ func (m *Model) switchPhase(finished bool) (tea.Model, tea.Cmd) {
 		m.state = stateSelecting
 		return m, nil
 	}
+
+	beeep.Beep(beeep.DefaultFreq, beeep.DefaultDuration)
+	beeep.Notify("temgo", newPhase.Message, "")
 
 	m.currentPhase = newPhase
 	m.remaining = time.Duration(newPhase.Duration)

@@ -24,14 +24,14 @@ const twoByTwoPlan = `{
   "sections": [
     {
       "phases": [
-        {"type": "a", "duration": "1s", "name": "A", "icon": "•", "message": "", "color": "#FFF"},
-        {"type": "b", "duration": "1s", "name": "B", "icon": "•", "message": "", "color": "#FFF"}
+        {"type": "a", "duration": "1s", "name": "A", "icon": "•", "text": "", "message": "", "color": "#FFF"},
+        {"type": "b", "duration": "1s", "name": "B", "icon": "•", "text": "", "message": "", "color": "#FFF"}
       ],
       "repeat": 2
     },
     {
       "phases": [
-        {"type": "c", "duration": "1s", "name": "C", "icon": "•", "message": "", "color": "#FFF"}
+        {"type": "c", "duration": "1s", "name": "C", "icon": "•", "text": "", "message": "", "color": "#FFF"}
       ],
       "repeat": 1
     }
@@ -168,7 +168,7 @@ func TestPlanIterator_SinglePhasePlan(t *testing.T) {
 	"sections": [
 		{
 		"phases": [
-			{"type": "simple", "duration": "1s", "name": "S", "icon": "•", "message": "", "color": "#FFF"}
+			{"type": "simple", "duration": "1s", "name": "S", "icon": "•", "text": "", "message": "", "color": "#FFF"}
 		],
 		"repeat": 1
 		}
@@ -194,7 +194,7 @@ func TestPlanIterator_SinglePhasePlan(t *testing.T) {
 
 func TestBuilder_RepeatPlanZero(t *testing.T) {
 	plan := NewBuilder().
-		AddPhase("x", time.Second, "X", "•", "", "#FFF").
+		AddPhase("x", time.Second, "X", "•", "", "", "#FFF").
 		RepeatPlan(0).
 		Build()
 
@@ -205,7 +205,7 @@ func TestBuilder_RepeatPlanZero(t *testing.T) {
 
 func TestBuilder_RepeatPlanNegative(t *testing.T) {
 	plan := NewBuilder().
-		AddPhase("x", time.Second, "X", "•", "", "#FFF").
+		AddPhase("x", time.Second, "X", "•", "", "", "#FFF").
 		RepeatPlan(-5).
 		Build()
 
@@ -222,8 +222,8 @@ func TestLoadPlan(t *testing.T) {
 	"sections": [
 		{
 		"phases": [
-			{"type": "work", "duration": "25m", "name": "Work", "icon": "🧠", "message": "Focus", "color": "#00FF00"},
-			{"type": "rest", "duration": "5m",  "name": "Rest", "icon": "☕", "message": "Break", "color": "#87CEEB"}
+		{"type": "work", "duration": "25m", "name": "Work", "icon": "🧠", "text": "Focus", "message": "Focus!", "color": "#00FF00"},
+		{"type": "rest", "duration": "5m",  "name": "Rest", "icon": "☕", "text": "Break", "message": "Break!", "color": "#87CEEB"}
 		],
 		"repeat": 4
 		}
@@ -273,7 +273,7 @@ func TestLoadPlan_BadDuration(t *testing.T) {
   "sections": [
     {
       "phases": [
-        {"type": "x", "duration": "1s", "name": "X", "icon": "•", "message": "", "color": "#FFF"}
+        {"type": "x", "duration": "1s", "name": "X", "icon": "•", "text": "", "message": "", "color": "#FFF"}
       ],
       "repeat": 1
     }
@@ -297,7 +297,7 @@ func TestPhase_AllFields(t *testing.T) {
 	"sections": [
 		{
 		"phases": [
-			{"type": "prolog", "duration": "10s", "name": "Prolog", "icon": "🚀", "message": "Go", "color": "#00CED1"}
+			{"type": "prolog", "duration": "10s", "name": "Prolog", "icon": "🚀", "text": "Go", "message": "Go!", "color": "#00CED1"}
 		],
 		"repeat": 1
 		}
@@ -319,6 +319,9 @@ func TestPhase_AllFields(t *testing.T) {
 	}
 	if phase.Color == "" {
 		t.Error("phase.Color is empty")
+	}
+	if phase.Text == "" {
+		t.Error("phase.Text is empty")
 	}
 	if phase.Message == "" {
 		t.Error("phase.Message is empty")
