@@ -3,6 +3,7 @@ package plan
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -325,5 +326,126 @@ func TestPhase_AllFields(t *testing.T) {
 	}
 	if phase.Message == "" {
 		t.Error("phase.Message is empty")
+	}
+}
+
+func TestDuration_String(t *testing.T) {
+	tests := []struct {
+		name string
+		d    Duration
+		want string
+	}{
+		{"zero", Duration(0), "00:00"},
+		{"seconds only", Duration(45 * time.Second), "00:45"},
+		{"one minute", Duration(60 * time.Second), "01:00"},
+		{"minutes and seconds", Duration(25*time.Minute + 45*time.Second), "25:45"},
+		{"one hour", Duration(1 * time.Hour), "1:00:00"},
+		{"hours minutes seconds", Duration(3*time.Hour + 35*time.Minute + 15*time.Second), "3:35:15"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.d.String(); got != tt.want {
+				t.Errorf("Duration(%v).String() = %q, want %q", time.Duration(tt.d), got, tt.want)
+			}
+		})
+	}
+}
+
+func TestFormatDuration(t *testing.T) {
+	tests := []struct {
+		name  string
+		input time.Duration
+		want  string
+	}{
+		{"zero", 0, "00:00"},
+		{"seconds", 45 * time.Second, "00:45"},
+		{"minute", 60 * time.Second, "01:00"},
+		{"minutes seconds", 25*time.Minute + 45*time.Second, "25:45"},
+		{"hour", 1 * time.Hour, "1:00:00"},
+		{"hours minutes", 2*time.Hour + 15*time.Minute, "2:15:00"},
+		{"full", 3*time.Hour + 35*time.Minute + 15*time.Second, "3:35:15"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := FormatDuration(tt.input); got != tt.want {
+				t.Errorf("FormatDuration(%v) = %q, want %q", tt.input, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestLoadPlan_SetsName(t *testing.T) {
+	dir := t.TempDir()
+	json := `{
+	"sections": [{"phases": [
+		{"type": "w", "duration": "1s", "name": "W", "icon": "•", "text": "", "message": "", "color": "#FFF"}
+	], "repeat": 1}], "repeat": 1}`
+	os.WriteFile(filepath.Join(dir, "my-awesome-plan.json"), []byte(json), 0644)
+
+	p, err := LoadPlan(filepath.Join(dir, "my-awesome-plan.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if p.Name != "my-awesome-plan" {
+		t.Errorf("Name = %q, want %q", p.Name, "my-awesome-plan")
+	}
+}
+
+func TestLoadPlan_NameWithoutExt(t *testing.T) {
+	dir := t.TempDir()
+	json := `{"sections": [{"phases": [
+		{"type": "w", "duration": "1s", "name": "W", "icon": "•", "text": "", "message": "", "color": "#FFF"}
+	], "repeat": 1}], "repeat": 1}`
+	os.WriteFile(filepath.Join(dir, "deep.work.json"), []byte(json), 0644)
+
+	p, err := LoadPlan(filepath.Join(dir, "deep.work.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if p.Name != "deep.work" {
+		t.Errorf("Name = %q, want %q", p.Name, "deep.work")
+	}
+}
+
+func TestPlan_String(t *testing.T) {
+	p := NewBuilder().
+		AddPhase("work", time.Second, "Work", "🧠", "Focus", "Focus!", "#FFF").
+		Build()
+	p.Name = "test"
+
+	s := p.String()
+
+	checks := []string{
+		"Plan: test",
+		"Work",
+		"00:01",
+	}
+	for _, want := range checks {
+		if !strings.Contains(s, want) {
+			t.Errorf("String() should contain %q\nGot:\n%s", want, s)
+		}
+	}
+}
+
+func TestPlan_String_MultiSection(t *testing.T) {
+	p := NewBuilder().
+		AddPhase("work", 25*time.Minute, "Work", "🧠", "", "", "#FFF").
+		AddRepeating(2,
+			Phase{Type: "rest", Duration: Duration(5 * time.Minute), Name: "Rest", Icon: "☕", Color: "#87CEEB"},
+		).
+		Build()
+	p.Name = "multi"
+
+	s := p.String()
+	if !strings.Contains(s, "25:00") {
+		t.Error("String() should contain formatted work duration")
+	}
+	if !strings.Contains(s, "05:00") {
+		t.Error("String() should contain formatted rest duration")
+	}
+	if !strings.Contains(s, "(2×)") {
+		t.Error("String() should show section repeat count")
 	}
 }

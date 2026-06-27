@@ -14,7 +14,6 @@ import (
 
 	"github.com/venexene/temgo/internal/history"
 	"github.com/venexene/temgo/internal/plan"
-	"github.com/venexene/temgo/internal/timer"
 )
 
 type state int
@@ -75,33 +74,6 @@ func (m *Model) loadPlans(dir string) {
 				plan: plan,
 			})
 		}
-	}
-}
-
-func (m *Model) loadEmbeddedPlans() {
-	names := plan.ListEmbeddedPlanNames()
-
-	for _, name := range names {
-		plan, err := plan.LoadEmbeddedPlan(name)
-		if err != nil {
-			continue
-		}
-
-		isDuplicate := false
-		for _, item := range m.plans {
-			if item.name == name {
-				isDuplicate = true
-				break
-			}
-		}
-		if isDuplicate {
-			continue
-		}
-
-		m.plans = append(m.plans, planItem{
-			name: name,
-			plan: plan,
-		})
 	}
 }
 
@@ -206,7 +178,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case initMsg:
 		m.loadPlans(plan.PlansDir())
-		m.loadEmbeddedPlans()
 		m.state = stateSelecting
 	default:
 		if m.state == stateSelecting {
@@ -275,7 +246,7 @@ func (m Model) viewTimer() string {
 
 	text := textStyle.Render(m.currentPhase.Text)
 
-	timeStr := timerStyle.Render(timer.FormatDuration(m.remaining))
+	timeStr := timerStyle.Render(plan.FormatDuration(m.remaining))
 
 	total := time.Duration(m.currentPhase.Duration)
 	elapsed := total - m.remaining

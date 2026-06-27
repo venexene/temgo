@@ -1,11 +1,8 @@
 package plan
 
 import (
-	"embed"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 )
@@ -72,6 +69,7 @@ func (b *Builder) Build() *Plan {
 }
 
 type Plan struct {
+	Name     string
 	Sections []Section `json:"sections"`
 	Repeat   int       `json:"repeat"`
 }
@@ -94,60 +92,20 @@ func (p *Plan) PhasesPerCycle() int {
 	return total
 }
 
-func LoadPlan(filepath string) (*Plan, error) {
-	file, err := os.Open(filepath)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
+func (p Plan) String() string {
+	var sb strings.Builder
 
-	var plan Plan
-	decoder := json.NewDecoder(file)
-	err = decoder.Decode(&plan)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := plan.Validate(); err != nil {
-		return nil, err
-	}
-
-	return &plan, nil
-}
-
-//go:embed plans/*.json
-var embeddedPlans embed.FS
-
-func LoadEmbeddedPlan(filename string) (*Plan, error) {
-	file, err := embeddedPlans.ReadFile(fmt.Sprintf("plans/%s.json", filename))
-	if err != nil {
-		return nil, err
-	}
-
-	var plan Plan
-	if err := json.Unmarshal(file, &plan); err != nil {
-		return nil, err
-	}
-
-	if err := plan.Validate(); err != nil {
-		return nil, err
-	}
-	return &plan, nil
-}
-
-func ListEmbeddedPlanNames() []string {
-	entries, err := embeddedPlans.ReadDir("plans")
-	if err != nil {
-		return nil
-	}
-
-	var names []string
-	for _, entry := range entries {
-		if entry.IsDir() {
-			continue
+	sb.WriteString(fmt.Sprintf("Plan: %s\n\n", p.Name))
+	sb.WriteString(fmt.Sprintf("Sprints: %d\n", p.Repeat))
+	for i, section := range p.Sections {
+		sectionString := fmt.Sprintf("Section %d (%d×):\n", i+1, section.Repeat)
+		sb.WriteString(sectionString)
+		for _, phase := range section.Phases {
+			phaseString := fmt.Sprintf("%s: %s\n", phase.Name, phase.Duration)
+			sb.WriteString(phaseString)
 		}
-		names = append(names, strings.TrimSuffix(entry.Name(), ".json"))
+		sb.WriteString("\n")
 	}
 
-	return names
+	return sb.String()
 }

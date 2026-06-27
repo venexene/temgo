@@ -35,31 +35,6 @@ func loadTestPlan(t *testing.T) *plan.Plan {
 	return p
 }
 
-func TestTimer_DurationFormat(t *testing.T) {
-	tests := []struct {
-		name     string
-		input    time.Duration
-		expected string
-	}{
-		{"zero", 0, "00:00"},
-		{"seconds only", 45 * time.Second, "00:45"},
-		{"one minute", 60 * time.Second, "01:00"},
-		{"minutes and seconds", 25*time.Minute + 45*time.Second, "25:45"},
-		{"one hour exactly", 1 * time.Hour, "1:00:00"},
-		{"hours and minutes", 2*time.Hour + 15*time.Minute, "2:15:00"},
-		{"all", 3*time.Hour + 35*time.Minute + 15*time.Second, "3:35:15"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := FormatDuration(tt.input)
-			if got != tt.expected {
-				t.Errorf("got %q, want %q", got, tt.expected)
-			}
-		})
-	}
-}
-
 func TestTimer_Cancellation(t *testing.T) {
 	dir := t.TempDir()
 	wt := NewWorkTimer(loadTestPlan(t), history.NewHistory(filepath.Join(dir, "test.jsonl")))

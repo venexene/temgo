@@ -2,6 +2,7 @@ package plan
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 )
 
@@ -22,4 +23,17 @@ func (d *Duration) UnmarshalJSON(b []byte) error {
 	}
 	*d = Duration(dur)
 	return nil
+}
+
+func (d Duration) String() string {
+	return FormatDuration(time.Duration(d))
+}
+
+func FormatDuration(t time.Duration) string {
+	seconds := int(t.Seconds())
+	if seconds >= 3600 {
+		return fmt.Sprintf("%d:%02d:%02d", seconds/3600, (seconds%3600)/60, seconds%60)
+	} else {
+		return fmt.Sprintf("%02d:%02d", seconds/60, seconds%60)
+	}
 }

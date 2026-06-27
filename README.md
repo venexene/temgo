@@ -5,8 +5,7 @@
 ## Установка
 
 ```
-go install github.com/venexene/temgo/cmd/temgo@latest
-go install github.com/venexene/temgo/cmd/temgo-tui@latest
+go install github.com/venexene/temgo/cmd@latest
 ```
 
 Или из исходников:
@@ -20,21 +19,22 @@ make build
 ## CLI
 
 ```
-temgo                    # classic: 4×25мин / 3 цикла
-temgo -P short           # 3×15мин / 2 цикла
-temgo -P long            # 3×50мин / 2 цикла
-temgo --add my-plan.json # импорт своего плана в .temgo/plans/
+temgo start               # план по умолчанию (classic, если не меняли)
+temgo start -P short      # разовый запуск другого пресета
+temgo start -P long       # можно переопределить и так
 ```
 
-Прогресс – обратный отсчет в одну строку. Ctrl+C – выход. История пишется в `.temgo/history.jsonl`.
+Без флага используется план, установленный через `config set`. По умолчанию — classic.
+
+На экране — обратный отсчёт в одну строку. При смене фазы — системное уведомление и звуковой сигнал. Ctrl+C — выход с сохранением незавершённой фазы в историю. Файл истории: `~/.temgo/history.jsonl`.
 
 ## TUI
 
 ```
-temgo-tui
+temgo tui
 ```
 
-При запуске – список планов: три встроенных плюс пользовательские из `.temgo/plans/`. Стрелки – выбор, Enter – запуск.
+При запуске – список планов из `~/.temgo/plans/`. Стрелки – выбор, Enter – запуск.
 
 Экран таймера:
 - счетчик фазы и цикла
@@ -100,27 +100,35 @@ temgo-tui
 }
 ```
 
-Пользовательские планы кладутся в `.temgo/plans/`. CLI-импорт: `temgo --add file.json`. TUI подхватывает их автоматически.
+Пользовательские планы кладутся в `~/.temgo/plans/` и подхватываются автоматически.
+
+## Управление планами
+
+```
+temgo config list           показать все доступные планы
+temgo config add file.json  добавить свой план
+temgo config delete name    удалить план
+temgo config set name       назначить планом по умолчанию
+temgo config show name      показать структуру плана
+```
 
 ## Структура
 
 ```
-cmd/temgo            точка входа CLI
-cmd/temgo-tui        точка входа TUI (Bubble Tea + Lipgloss)
+cmd/main.go          точка входа, подкоманды
 internal/
-  plan               фазы, секции, итератор, строитель, встроенные планы
-  timer              движок таймера, остановка по контексту
-  tui                Bubble Tea Model: выбор плана, таймер, рендер
+  plan               модель, итератор, строитель, JSON I/O, конфиг
+  timer              движок таймера, остановка по контексту, тикер
+  tui                Bubble Tea: выбор плана, таймер, рендер
   history            журнал сессий в JSONL
-  config             флаги CLI, имена пресетов
+  commands           обработчики подкоманд: start, tui, config
 ```
 
 Архитектура:
 - `PlanIterator` – обход секций и повторов.
 - `Builder` – fluent API для создания планов в коде.
+- `Duration` – кастомный тип, JSON-маршалинг `"25m"` ↔ `time.Duration`.
+- Остановка через контекст: `signal.NotifyContext` в CLI, `tea.Quit` в TUI.
+- TUI – трёхслойный рендер: `JoinVertical` → `boxStyle.Render` → `lipgloss.Place`.
+- Данные хранятся в `~/.temgo/`: планы, история, конфиг.
 - Встроенные пресеты через `//go:embed` – бинарник самодостаточен, работает из любой папки.
-- Остановка через контекст: `signal.NotifyContext` в CLI, `tea.Quit` в TUI. История в обоих случаях дописывается на диск.
-- TUI – трёхслойный рендеринг: `JoinVertical` (строки) → `boxStyle.Render` (рамка) → `lipgloss.Place` (позиция).
-
-
-

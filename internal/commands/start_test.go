@@ -1,4 +1,4 @@
-package config
+package commands
 
 import (
 	"os"
@@ -9,7 +9,25 @@ import (
 	"github.com/venexene/temgo/internal/plan"
 )
 
-func TestParseFlags_EmbeddedPresets(t *testing.T) {
+func setupStartTest(t *testing.T) {
+	t.Helper()
+	dir := t.TempDir()
+	old := plan.DataDir
+	plan.DataDir = dir
+	plan.DefaultPlanName = "classic"
+	t.Cleanup(func() {
+		plan.DataDir = old
+		plan.DefaultPlanName = "classic"
+	})
+	plan.CreateTemgoDir()
+	if err := plan.EnsureDefaultPlans(); err != nil {
+		t.Fatalf("EnsureDefaultPlans: %v", err)
+	}
+}
+
+func TestParseStart_EmbeddedPresets(t *testing.T) {
+	setupStartTest(t)
+
 	tests := []struct {
 		args []string
 	}{
@@ -26,7 +44,7 @@ func TestParseFlags_EmbeddedPresets(t *testing.T) {
 			name = "default"
 		}
 		t.Run(name, func(t *testing.T) {
-			got, err := ParseFlags(tt.args)
+			got, err := parseStart(tt.args)
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -43,8 +61,10 @@ func TestParseFlags_EmbeddedPresets(t *testing.T) {
 	}
 }
 
-func TestParseFlags_UnknownPreset(t *testing.T) {
-	_, err := ParseFlags([]string{"-P", "nonsense"})
+func TestParseStart_UnknownPreset(t *testing.T) {
+	setupStartTest(t)
+
+	_, err := parseStart([]string{"-P", "nonsense"})
 	if err == nil {
 		t.Fatal("expected error for unknown preset")
 	}
@@ -53,21 +73,21 @@ func TestParseFlags_UnknownPreset(t *testing.T) {
 	}
 }
 
-func TestParseFlags_InvalidFlag(t *testing.T) {
-	_, err := ParseFlags([]string{"-X"})
+func TestParseStart_InvalidFlag(t *testing.T) {
+	_, err := parseStart([]string{"-X"})
 	if err == nil {
 		t.Fatal("expected error for invalid flag")
 	}
 }
 
-func TestParseFlags_MissingValue(t *testing.T) {
-	_, err := ParseFlags([]string{"-P"})
+func TestParseStart_MissingValue(t *testing.T) {
+	_, err := parseStart([]string{"-P"})
 	if err == nil {
 		t.Fatal("expected error for -P without value")
 	}
 }
 
-func TestParseFlags_DiskFallback(t *testing.T) {
+func TestParseStart_DiskFallback(t *testing.T) {
 	dir := t.TempDir()
 	plansDir := filepath.Join(dir, "plans")
 	os.MkdirAll(plansDir, 0755)
@@ -87,7 +107,7 @@ func TestParseFlags_DiskFallback(t *testing.T) {
 	plan.DataDir = dir
 	defer func() { plan.DataDir = old }()
 
-	got, err := ParseFlags([]string{"-P", "test"})
+	got, err := parseStart([]string{"-P", "test"})
 	if err != nil {
 		t.Fatalf("disk fallback failed: %v", err)
 	}
@@ -99,26 +119,20 @@ func TestParseFlags_DiskFallback(t *testing.T) {
 	}
 }
 
-func TestParseFlags_EmbeddedWinsOverDisk(t *testing.T) {
+func TestParseStart_InvalidPlanOnDisk(t *testing.T) {
 	dir := t.TempDir()
 	plansDir := filepath.Join(dir, "plans")
 	os.MkdirAll(plansDir, 0755)
 
 	json := `{"sections": [], "repeat": 1}`
-	os.WriteFile(filepath.Join(plansDir, "classic.json"), []byte(json), 0644)
+	os.WriteFile(filepath.Join(plansDir, "bad.json"), []byte(json), 0644)
 
 	old := plan.DataDir
 	plan.DataDir = dir
 	defer func() { plan.DataDir = old }()
 
-	got, err := ParseFlags([]string{"-P", "classic"})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if err := got.Validate(); err != nil {
-		t.Fatalf("embedded plan failed validation: %v", err)
-	}
-	if len(got.Sections) == 0 {
-		t.Error("embedded plan should have sections, disk fallback returned empty")
+	_, err := parseStart([]string{"-P", "bad"})
+	if err == nil {
+		t.Fatal("expected error for plan with no sections")
 	}
 }

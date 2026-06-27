@@ -1,4 +1,4 @@
-package main
+package commands
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 	"github.com/venexene/temgo/internal/tui"
 )
 
-func main() {
+func StartTUI() {
 	hist := history.NewHistory(plan.HistoryPath())
 
 	model := tui.NewModel(nil, nil, hist)

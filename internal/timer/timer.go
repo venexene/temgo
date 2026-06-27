@@ -3,9 +3,9 @@ package timer
 import (
 	"context"
 	"fmt"
+	"github.com/gen2brain/beeep"
 	"os"
 	"time"
-	"github.com/gen2brain/beeep"
 
 	"github.com/venexene/temgo/internal/history"
 	"github.com/venexene/temgo/internal/plan"
@@ -63,19 +63,10 @@ func (t *WorkTimer) run(ctx context.Context) {
 	fmt.Println("\nPlan is over!")
 }
 
-func FormatDuration(t time.Duration) string {
-	seconds := int(t.Seconds())
-	if seconds >= 3600 {
-		return fmt.Sprintf("%d:%02d:%02d", seconds/3600, (seconds%3600)/60, seconds%60)
-	} else {
-		return fmt.Sprintf("%02d:%02d", seconds/60, seconds%60)
-	}
-}
-
 func (t *WorkTimer) runPhase(ctx context.Context, deadline time.Time) error {
 	ticker := t.startTicker(deadline, ctx)
 	for remaining := range ticker {
-		fmt.Printf("%s\r", FormatDuration(remaining))
+		fmt.Printf("%s\r", plan.FormatDuration(remaining))
 	}
 	return ctx.Err()
 }
