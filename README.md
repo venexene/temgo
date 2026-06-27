@@ -28,7 +28,7 @@ temgo start -P long       # можно переопределить и так
 
 На экране – обратный отсчёт в одну строку. При смене фазы – системное уведомление и звуковой сигнал. Ctrl+C – выход с сохранением незавершённой фазы в историю. Файл истории: `~/.temgo/history.jsonl`.
 
-## TUIrefactor: single binary, subcommands, config persistence
+## TUI
 
 ```
 temgo tui
