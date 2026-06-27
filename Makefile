@@ -1,7 +1,7 @@
 .PHONY: build test clean install vet
 
 build:
-	go build -o temgo ./cmd
+	go build -o temgo .
 
 test:
 	go test -race -count=1 ./...
@@ -13,4 +13,4 @@ clean:
 	rm -f temgo
 
 install:
-	go install ./cmd
+	go install .

@@ -5,7 +5,7 @@
 ## Установка
 
 ```
-go install github.com/venexene/temgo/cmd@latest
+go install github.com/venexene/temgo@latest
 ```
 
 Или из исходников:
@@ -115,7 +115,7 @@ temgo config show name      показать структуру плана
 ## Структура
 
 ```
-cmd/main.go          точка входа, подкоманды
+main.go              точка входа, подкоманды
 internal/
   plan               модель, итератор, строитель, JSON I/O, конфиг
   timer              движок таймера, остановка по контексту, тикер
