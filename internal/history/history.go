@@ -3,10 +3,12 @@ package history
 import (
 	"bufio"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"time"
-	"fmt"
+
+	"github.com/venexene/temgo/internal/plan"
 )
 
 type Entry struct {
@@ -56,27 +58,72 @@ func (h *History) Flush() error {
 	return nil
 }
 
-func LoadHistory(filePath string) (*History, error) {
-	file, err := os.Open(filePath)
+func LoadRange(from, to time.Time) ([]Entry, error) {
+	file, err := os.Open(plan.HistoryPath())
 	if err != nil {
 		return nil, err
 	}
 	defer file.Close()
 
+	entries := []Entry{}
 	scanner := bufio.NewScanner(file)
-	history := NewHistory(filePath)
 	for scanner.Scan() {
 		var entry Entry
 		
+		if len(scanner.Bytes()) == 0 {
+			continue 
+		}
+
 		if err := json.Unmarshal(scanner.Bytes(), &entry); err != nil {
 			fmt.Fprintf(os.Stderr, "failed to load history entry: %v", err)
 			continue
 		}
-		history.Entries = append(history.Entries, entry)
+
+		if !entry.Start.Before(from) && !entry.Start.After(to) {
+			entries = append(entries, entry)
+		}
 	}
 	if err := scanner.Err(); err != nil {
 		return nil, err
 	}
 
-	return history, nil
+	return entries, nil
+}
+
+func LoadAll() ([]Entry, error) {
+	return LoadRange(time.Time{}, time.Now())
+}
+
+func LoadToday() ([]Entry, error) {
+    now := time.Now()
+    from := now.Truncate(24 * time.Hour)
+    to := from.Add(24 * time.Hour - time.Second)
+    return LoadRange(from, to)
+}
+
+func startOfWeek(t time.Time) time.Time {
+	weekday := int(t.Weekday())
+	shift := 0
+	if weekday == 0 {
+		shift = 6
+	} else {
+		shift = weekday - 1
+	}
+	return t.AddDate(0, 0, -shift).Truncate(24 * time.Hour)
+}
+
+func LoadWeek() ([]Entry, error) {
+    from := startOfWeek(time.Now())
+    to := from.Add(7 * 24 * time.Hour - time.Second)
+    return LoadRange(from, to)
+}
+
+func LoadHistory() (*History, error) {
+	entries, err := LoadAll()
+    if err != nil {
+        return nil, err
+    }
+    h := NewHistory(plan.HistoryPath())
+    h.Entries = entries
+    return h, nil
 }
