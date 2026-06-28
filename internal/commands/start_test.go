@@ -136,3 +136,13 @@ func TestParseStart_InvalidPlanOnDisk(t *testing.T) {
 		t.Fatal("expected error for plan with no sections")
 	}
 }
+
+func TestParseStart_Help(t *testing.T) {
+	p, err := parseStart([]string{"-h"})
+	if err != nil {
+		t.Errorf("help should not return error: %v", err)
+	}
+	if p != nil {
+		t.Error("help should return nil plan")
+	}
+}

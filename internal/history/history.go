@@ -91,7 +91,7 @@ func LoadRange(from, to time.Time) ([]Entry, error) {
 }
 
 func LoadAll() ([]Entry, error) {
-	return LoadRange(time.Time{}, time.Now())
+	return LoadRange(time.Unix(0, 0), time.Now())
 }
 
 func LoadToday() ([]Entry, error) {
@@ -101,7 +101,7 @@ func LoadToday() ([]Entry, error) {
     return LoadRange(from, to)
 }
 
-func startOfWeek(t time.Time) time.Time {
+func startOfMondayBasedWeek(t time.Time) time.Time {
 	weekday := int(t.Weekday())
 	shift := 0
 	if weekday == 0 {
@@ -113,7 +113,7 @@ func startOfWeek(t time.Time) time.Time {
 }
 
 func LoadWeek() ([]Entry, error) {
-    from := startOfWeek(time.Now())
+    from := startOfMondayBasedWeek(time.Now())
     to := from.Add(7 * 24 * time.Hour - time.Second)
     return LoadRange(from, to)
 }

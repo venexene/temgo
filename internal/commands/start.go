@@ -27,6 +27,30 @@ Examples:
 temgo start -P classic
 `
 
+func Start(args []string) error {
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer cancel()
+
+	fmt.Println("Welcome to Temgo!")
+
+	p, err := parseStart(args)
+	if err != nil {
+		fmt.Print(startUsage)
+		return err
+	}
+
+	history := history.NewHistory(plan.HistoryPath())
+	wt := timer.NewWorkTimer(p, history)
+
+	if err := wt.Start(ctx); err != nil   && !errors.Is(err, context.Canceled){
+		return err
+	}
+
+	fmt.Println("Bye!")
+
+	return nil
+}
+
 func parseStart(args []string) (*plan.Plan, error) {
 	for _, arg := range args {
         if arg == "-h" || arg == "--help" {
@@ -55,28 +79,4 @@ func parseStart(args []string) (*plan.Plan, error) {
 	}
 
 	return p, nil
-}
-
-func Start(args []string) error {
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer cancel()
-
-	fmt.Println("Welcome to Temgo!")
-
-	p, err := parseStart(args)
-	if err != nil {
-		fmt.Print(startUsage)
-		return err
-	}
-
-	history := history.NewHistory(plan.HistoryPath())
-	wt := timer.NewWorkTimer(p, history)
-
-	if err := wt.Start(ctx); err != nil   && !errors.Is(err, context.Canceled){
-		return err
-	}
-
-	fmt.Println("Bye!")
-
-	return nil
 }

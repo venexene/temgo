@@ -59,5 +59,9 @@ func main() {
 			os.Exit(1)
 		}
 	case "stats":
+		if err := commands.RunStats(os.Args[2:]); err != nil {
+			fmt.Fprintf(os.Stderr, "temgo: %v\n", err)
+			os.Exit(1)
+		}
 	}
 }
