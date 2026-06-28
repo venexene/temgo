@@ -10,17 +10,17 @@ import (
 
 const mainUsage = `Usage: temgo <command> [arguments]
 
-A focused work timer with presets, JSON plans, and session history.
+A focused work timer with JSON plans and session history.
 
 Commands:
   start     Start a timer in CLI mode
   tui       Start a timer in TUI mode
-  config    Manage presets
+  config    Manage plans
   stats     Show statistics
 
 Examples:
   temgo start -P classic
-  temgo tui -f myplan.json
+  temgo tui
   temgo stats --today
 
 Use "temgo <command> -h" for more information.

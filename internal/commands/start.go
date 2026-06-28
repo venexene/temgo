@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"syscall"
+	"errors"
 
 	"github.com/venexene/temgo/internal/history"
 	"github.com/venexene/temgo/internal/plan"
@@ -27,7 +28,14 @@ temgo start -P classic
 `
 
 func parseStart(args []string) (*plan.Plan, error) {
-	fs := flag.NewFlagSet("temgo", flag.ContinueOnError)
+	for _, arg := range args {
+        if arg == "-h" || arg == "--help" {
+            fmt.Print(startUsage)
+            return nil, nil
+        }
+    }
+
+    fs := flag.NewFlagSet("temgo", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 
 	presetName := fs.String("P", "", "plan name")
@@ -64,7 +72,7 @@ func Start(args []string) error {
 	history := history.NewHistory(plan.HistoryPath())
 	wt := timer.NewWorkTimer(p, history)
 
-	if err := wt.Start(ctx); err != nil {
+	if err := wt.Start(ctx); err != nil   && !errors.Is(err, context.Canceled){
 		return err
 	}
 

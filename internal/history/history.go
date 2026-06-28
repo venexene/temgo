@@ -1,10 +1,12 @@
 package history
 
 import (
+	"bufio"
 	"encoding/json"
 	"os"
 	"path/filepath"
 	"time"
+	"fmt"
 )
 
 type Entry struct {
@@ -52,4 +54,29 @@ func (h *History) Flush() error {
 	h.Entries = h.Entries[:0]
 
 	return nil
+}
+
+func LoadHistory(filePath string) (*History, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	history := NewHistory(filePath)
+	for scanner.Scan() {
+		var entry Entry
+		
+		if err := json.Unmarshal(scanner.Bytes(), &entry); err != nil {
+			fmt.Fprintf(os.Stderr, "failed to load history entry: %v", err)
+			continue
+		}
+		history.Entries = append(history.Entries, entry)
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	return history, nil
 }

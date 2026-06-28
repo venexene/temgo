@@ -59,6 +59,10 @@ func RunConfig(args []string) error {
 			return fmt.Errorf("Not enough arguments to delete plan")
 		}
 		printPlanInfo(args[1])
+	case "--help":
+		fallthrough
+	case "-h":
+		fmt.Print(configUsage)
 	default:
 		fmt.Print(configUsage)
 		return fmt.Errorf("Unknown command")
