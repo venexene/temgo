@@ -69,9 +69,9 @@ func LoadRange(from, to time.Time) ([]Entry, error) {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		var entry Entry
-		
+
 		if len(scanner.Bytes()) == 0 {
-			continue 
+			continue
 		}
 
 		if err := json.Unmarshal(scanner.Bytes(), &entry); err != nil {
@@ -95,10 +95,10 @@ func LoadAll() ([]Entry, error) {
 }
 
 func LoadToday() ([]Entry, error) {
-    now := time.Now()
-    from := now.Truncate(24 * time.Hour)
-    to := from.Add(24 * time.Hour - time.Second)
-    return LoadRange(from, to)
+	now := time.Now()
+	from := now.Truncate(24 * time.Hour)
+	to := from.Add(24*time.Hour - time.Second)
+	return LoadRange(from, to)
 }
 
 func startOfMondayBasedWeek(t time.Time) time.Time {
@@ -113,17 +113,17 @@ func startOfMondayBasedWeek(t time.Time) time.Time {
 }
 
 func LoadWeek() ([]Entry, error) {
-    from := startOfMondayBasedWeek(time.Now())
-    to := from.Add(7 * 24 * time.Hour - time.Second)
-    return LoadRange(from, to)
+	from := startOfMondayBasedWeek(time.Now())
+	to := from.Add(7*24*time.Hour - time.Second)
+	return LoadRange(from, to)
 }
 
 func LoadHistory() (*History, error) {
 	entries, err := LoadAll()
-    if err != nil {
-        return nil, err
-    }
-    h := NewHistory(plan.HistoryPath())
-    h.Entries = entries
-    return h, nil
+	if err != nil {
+		return nil, err
+	}
+	h := NewHistory(plan.HistoryPath())
+	h.Entries = entries
+	return h, nil
 }

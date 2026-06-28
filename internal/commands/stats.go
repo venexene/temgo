@@ -35,13 +35,13 @@ temgo stats --all --csv > report.csv
 
 func RunStats(args []string) error {
 	for _, arg := range args {
-        if arg == "-h" || arg == "--help" {
-            fmt.Print(statsUsage)
+		if arg == "-h" || arg == "--help" {
+			fmt.Print(statsUsage)
 			return nil
-        }
-    }
+		}
+	}
 
-    fs := flag.NewFlagSet("temgo", flag.ContinueOnError)
+	fs := flag.NewFlagSet("temgo", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 
 	all := fs.Bool("all", false, "show all sessions stats")
@@ -56,9 +56,15 @@ func RunStats(args []string) error {
 	}
 
 	count := 0
-	if *today { count++ }
-	if *week  { count++ }
-	if *all   { count++ }
+	if *today {
+		count++
+	}
+	if *week {
+		count++
+	}
+	if *all {
+		count++
+	}
 	if count > 1 {
 		return fmt.Errorf("--today, --week, and --all are mutually exclusive")
 	}
@@ -131,7 +137,7 @@ func printString(entries []history.Entry, title string) {
 	typesCount := make(map[string]time.Duration)
 	phasesCount := 0
 	finishedCount := 0
- 	for _, entry := range entries {
+	for _, entry := range entries {
 		typesCount[entry.Type] += time.Duration(entry.Duration) * time.Second
 		phasesCount += 1
 		if entry.Finished {
@@ -147,5 +153,3 @@ func printString(entries []history.Entry, title string) {
 	sb.WriteString(fmt.Sprintf("Finished: %d/%d\n", finishedCount, phasesCount))
 	fmt.Fprint(os.Stderr, sb.String())
 }
-
-

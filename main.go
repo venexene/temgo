@@ -8,6 +8,8 @@ import (
 	"github.com/venexene/temgo/internal/plan"
 )
 
+var version = "dev"
+
 const mainUsage = `Usage: temgo <command> [arguments]
 
 A focused work timer with JSON plans and session history.
@@ -17,6 +19,7 @@ Commands:
   tui       Start a timer in TUI mode
   config    Manage plans
   stats     Show statistics
+  version   Print version
 
 Examples:
   temgo start -P classic
@@ -30,6 +33,11 @@ func main() {
 	if len(os.Args) < 2 {
 		fmt.Print(mainUsage)
 		os.Exit(1)
+	}
+
+	if len(os.Args) == 2 && os.Args[1] == "version" {
+		fmt.Println("temgo", version)
+		return
 	}
 
 	if err := plan.CreateTemgoDir(); err != nil {

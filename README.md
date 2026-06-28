@@ -5,17 +5,17 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/venexene/temgo)](https://goreportcard.com/report/github.com/venexene/temgo)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-Таймер для фокусированной работы в терминале. Два режима: CLI и TUI на Bubble Tea.
+A focused work timer for the terminal. Two modes: CLI and TUI powered by Bubble Tea.
 
 ![](temgo.gif)
 
-## Установка
+## Install
 
 ```
 go install github.com/venexene/temgo@latest
 ```
 
-Или из исходников:
+Or build from source:
 
 ```
 git clone https://github.com/venexene/temgo
@@ -26,14 +26,14 @@ make build
 ## CLI
 
 ```
-temgo start               # план по умолчанию (classic, если не меняли)
-temgo start -P short      # разовый запуск другого пресета
-temgo start -P long       # можно переопределить и так
+temgo start               # default plan (classic unless changed)
+temgo start -P short      # one-off run with a different preset
+temgo start -P long       # just as easily
 ```
 
-Без флага используется план, установленный через `config set`. По умолчанию – classic.
+Without a flag, the plan set via `config set` is used. Defaults to classic.
 
-На экране – обратный отсчёт в одну строку. При смене фазы – системное уведомление и звуковой сигнал. Ctrl+C – выход с сохранением незавершённой фазы в историю. Файл истории: `~/.temgo/history.jsonl`.
+A single-line countdown is shown on screen. A system notification and sound play when the phase changes. Ctrl+C exits, saving the incomplete phase to history. History file: `~/.temgo/history.jsonl`.
 
 ## TUI
 
@@ -41,56 +41,56 @@ temgo start -P long       # можно переопределить и так
 temgo tui
 ```
 
-При запуске – список планов из `~/.temgo/plans/`. Стрелки – выбор, Enter – запуск.
+On launch — a list of plans from `~/.temgo/plans/`. Arrow keys to pick, Enter to start.
 
-Экран таймера:
-- счетчик фазы и цикла
-- иконка и название фазы
-- сообщение фазы
-- таймер с обратным отсчетом
-- прогресс-бар
-- строка подсказок
+Timer screen:
+- phase and cycle counter
+- phase icon and name
+- phase message
+- countdown timer
+- progress bar
+- key hints
 
-| Клавиша | Действие |
-|---------|----------|
-| `space` | пауза / продолжить |
-| `s`     | пропустить фазу |
-| `q`     | назад к выбору плана |
-| `Ctrl+C`| выход |
+| Key | Action |
+|-----|--------|
+| `space` | pause / resume |
+| `s`     | skip phase |
+| `q`     | back to plan selection |
+| `Ctrl+C`| quit |
 
-`s` помечает фазу как незавершённую в истории. `q` сбрасывает накопленную историю на диск перед возвратом.
+`s` marks the phase as unfinished in history. `q` flushes accumulated history to disk before returning.
 
-## Планы
+## Plans
 
-Формат – JSON. Секции содержат фазы. У секций и плана задаются повторения – `repeat`.
+JSON format. Sections contain phases. Both sections and the plan itself have a `repeat` count.
 
-Встроенные пресеты:
-- **classic** – пролог 10с → 4×(25мин + 5мин) → отдых 30мин, ×3
-- **short** – 3×(15мин + 3мин) → отдых 15мин, ×2
-- **long** – 3×(50мин + 10мин) → отдых 30мин, ×2
+Built-in presets:
+- **classic** – 10s prologue → 4×(25min + 5min) → 30min rest, ×3
+- **short** – 3×(15min + 3min) → 15min rest, ×2
+- **long** – 3×(50min + 10min) → 30min rest, ×2
 
-Поля фазы:
+Phase fields:
 
-| Поле | Назначение |
-|------|-----------|
-| `type` | идентификатор |
-| `duration` | длительность: `"25m"`, `"10s"`, `"1h30m"` |
-| `name` | название, показывается в TUI |
-| `icon` | эмодзи, отображается в заголовке |
-| `text` | текст на экране таймера |
-| `message` | текст в системном уведомлении при смене фазы |
-| `color` | цвет прогресс-бара, HEX |
+| Field | Purpose |
+|-------|---------|
+| `type` | identifier |
+| `duration` | length: `"25m"`, `"10s"`, `"1h30m"` |
+| `name` | name shown in TUI |
+| `icon` | emoji displayed in the header |
+| `text` | text on the timer screen |
+| `message` | text in the system notification on phase change |
+| `color` | progress bar color, HEX |
 
-Поля плана:
+Plan fields:
 
-| Поле | Назначение |
-|------|-----------|
-| `sections` | список секций, выполняются по порядку |
-| `sections[].phases` | фазы внутри секции |
-| `sections[].repeat` | сколько раз повторить секцию |
-| `repeat` | сколько раз повторить весь план |
+| Field | Purpose |
+|-------|---------|
+| `sections` | list of sections, executed in order |
+| `sections[].phases` | phases within a section |
+| `sections[].repeat` | how many times to repeat the section |
+| `repeat` | how many times to repeat the entire plan |
 
-Минимальный пример целого плана:
+Minimal full plan example:
 
 ```json
 {
@@ -107,48 +107,48 @@ temgo tui
 }
 ```
 
-Пользовательские планы кладутся в `~/.temgo/plans/` и подхватываются автоматически.
+Custom plans go into `~/.temgo/plans/` and are picked up automatically.
 
-## Управление планами
-
-```
-temgo config list           показать все доступные планы
-temgo config add file.json  добавить свой план
-temgo config delete name    удалить план
-temgo config set name       назначить планом по умолчанию
-temgo config show name      показать структуру плана
-```
-
-## Статистика
+## Plan management
 
 ```
-temgo stats                 всё время, текстовый вывод
-temgo stats --today         только сегодня
-temgo stats --week          за неделю (с понедельника)
-temgo stats --all --json    машинный JSON-вывод
-temgo stats --all --csv     CSV-вывод для Excel
+temgo config list           list all available plans
+temgo config add file.json  add a custom plan
+temgo config delete name    delete a plan
+temgo config set name       set as the default plan
+temgo config show name      show plan structure
 ```
 
-При `--csv` или `--json` текстовый заголовок идёт в stderr, данные – в stdout. Можно направить в файл: `temgo stats --all --csv > report.csv`.
-
-## Структура
+## Statistics
 
 ```
-main.go              точка входа, подкоманды
+temgo stats                 all time, human-readable output
+temgo stats --today         today only
+temgo stats --week          this week (starting Monday)
+temgo stats --all --json    machine-readable JSON
+temgo stats --all --csv     CSV for Excel
+```
+
+With `--csv` or `--json`, the text header goes to stderr and data to stdout. Pipe to a file: `temgo stats --all --csv > report.csv`.
+
+## Structure
+
+```
+main.go              entry point, subcommand routing
 internal/
-  plan               модель, итератор, строитель, JSON I/O, конфиг
-  timer              движок таймера, остановка по контексту, тикер
-  tui                Bubble Tea: выбор плана, таймер, рендер
-  history            журнал сессий в JSONL, фильтрация по дате
-  commands           обработчики подкоманд: start, tui, config, stats
+  plan               model, iterator, builder, JSON I/O, config
+  timer              timer engine, context-based cancellation, ticker
+  tui                Bubble Tea: plan selector, timer, rendering
+  history            session journal in JSONL, date filtering
+  commands           subcommand handlers: start, tui, config, stats
 ```
 
-Архитектура:
-- `PlanIterator` – обход секций и повторов.
-- `Builder` – fluent API для создания планов в коде.
-- `Duration` – кастомный тип, JSON-маршалинг `"25m"` ↔ `time.Duration`.
-- Остановка через контекст: `signal.NotifyContext` в CLI, `tea.Quit` в TUI.
-- TUI – трёхслойный рендер: `JoinVertical` → `boxStyle.Render` → `lipgloss.Place`.
-- Данные хранятся в `~/.temgo/`: планы, история, конфиг.
-- Встроенные пресеты через `//go:embed` – бинарник самодостаточен.
-- `LoadRange` – фильтрация истории по диапазону дат для `stats`.
+Architecture:
+- `PlanIterator` — walks through sections and repeats.
+- `Builder` — fluent API for building plans in code.
+- `Duration` — custom type, JSON marshaling `"25m"` ↔ `time.Duration`.
+- Context-based cancellation: `signal.NotifyContext` in CLI, `tea.Quit` in TUI.
+- TUI — three-layer rendering: `JoinVertical` → `boxStyle.Render` → `lipgloss.Place`.
+- Data is stored in `~/.temgo/`: plans, history, config.
+- Built-in presets via `//go:embed` — the binary is self-contained.
+- `LoadRange` — history filtering by date range for `stats`.
