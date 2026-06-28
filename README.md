@@ -1,6 +1,13 @@
 # temgo
 
+[![Go Version](https://img.shields.io/badge/Go-1.25-00ADD8?logo=go)](https://go.dev/)
+[![CI](https://github.com/venexene/temgo/actions/workflows/ci.yml/badge.svg)](https://github.com/venexene/temgo/actions)
+[![Go Report Card](https://goreportcard.com/badge/github.com/venexene/temgo)](https://goreportcard.com/report/github.com/venexene/temgo)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 Таймер для фокусированной работы в терминале. Два режима: CLI и TUI на Bubble Tea.
+
+![](temgo.gif)
 
 ## Установка
 
@@ -91,7 +98,7 @@ temgo tui
     {
       "phases": [
         {"type": "work", "duration": "30m", "name": "Coding", "icon": "💻", "text": "Focus", "message": "Go!", "color": "#00FF00"},
-        {"type": "rest", "duration": "10m", "name": "Break",  "icon": "☕", "text": "Relax", "message": "Pause", "color": "#87CEEB"}
+        {"type": "rest", "duration": "10m", "name": "Break",  "icon": "💤", "text": "Relax", "message": "Pause", "color": "#87CEEB"}
       ],
       "repeat": 2
     }

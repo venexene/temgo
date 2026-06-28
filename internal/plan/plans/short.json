@@ -9,7 +9,7 @@
     {
       "phases": [
         {"type": "work", "duration": "15m", "name": "Work", "icon": "🧠", "text": "Stay focused", "message": "Focus time!", "color": "#00FF00"},
-        {"type": "rest", "duration": "3m", "name": "Rest", "icon": "☕", "text": "Take a break", "message": "Break time!", "color": "#87CEEB"}
+        {"type": "rest", "duration": "3m", "name": "Rest", "icon": "💤", "text": "Take a break", "message": "Break time!", "color": "#87CEEB"}
       ],
       "repeat": 3
     },

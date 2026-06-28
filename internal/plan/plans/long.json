@@ -9,7 +9,7 @@
     {
       "phases": [
         {"type": "work", "duration": "50m", "name": "Deep Work", "icon": "🧠", "text": "Deep focus session", "message": "Deep focus time!", "color": "#00FF00"},
-        {"type": "rest", "duration": "10m", "name": "Rest", "icon": "☕", "text": "Step away, recharge", "message": "Take a break!", "color": "#87CEEB"}
+        {"type": "rest", "duration": "10m", "name": "Rest", "icon": "💤", "text": "Step away, recharge", "message": "Take a break!", "color": "#87CEEB"}
       ],
       "repeat": 3
     },
