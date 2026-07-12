@@ -9,6 +9,7 @@ import (
 	"github.com/venexene/temgo/internal/plan"
 )
 
+// configUsage is the help text for the config subcommand.
 const configUsage = `Usage: temgo config <subcommand> [arguments]
 
 Manage presets and custom plans.
@@ -26,6 +27,7 @@ temgo config add ~/myplan.json
 temgo config show classic
 `
 
+// RunConfig dispatches config subcommands.
 func RunConfig(args []string) error {
 	if len(args) < 1 {
 		fmt.Print(configUsage)

@@ -33,6 +33,8 @@ temgo stats --week --json
 temgo stats --all --csv > report.csv
 `
 
+// RunStats loads session entries from the JSONL history file
+// and displays statistics for the requested time range.
 func RunStats(args []string) error {
 	for _, arg := range args {
 		if arg == "-h" || arg == "--help" {

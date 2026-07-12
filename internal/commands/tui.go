@@ -10,6 +10,7 @@ import (
 	"github.com/venexene/temgo/internal/tui"
 )
 
+// StartTUI launches the Bubble Tea TUI timer.
 func StartTUI() {
 	hist := history.NewHistory(plan.HistoryPath())
 

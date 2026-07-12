@@ -1,21 +1,27 @@
+// Package timer provides a context-aware work timer that iterates
+// through plan phases, shows a countdown, records history entries,
+// and triggers desktop notifications on phase transitions.
 package timer
 
 import (
 	"context"
 	"fmt"
-	"github.com/gen2brain/beeep"
 	"os"
 	"time"
+
+	"github.com/gen2brain/beeep"
 
 	"github.com/venexene/temgo/internal/history"
 	"github.com/venexene/temgo/internal/plan"
 )
 
+// WorkTimer runs a plan phase by phase, ticking a countdown per phase.
 type WorkTimer struct {
 	plan    *plan.Plan
 	history *history.History
 }
 
+// NewWorkTimer creates a WorkTimer for the given plan and history store.
 func NewWorkTimer(plan *plan.Plan, history *history.History) *WorkTimer {
 	return &WorkTimer{
 		plan:    plan,
@@ -23,6 +29,7 @@ func NewWorkTimer(plan *plan.Plan, history *history.History) *WorkTimer {
 	}
 }
 
+// Start begins the timer loop
 func (t *WorkTimer) Start(ctx context.Context) error {
 	fmt.Println("\nWorkTimer started!")
 	t.run(ctx)
@@ -84,7 +91,6 @@ func (t *WorkTimer) startTicker(deadline time.Time, ctx context.Context) <-chan 
 
 			select {
 			case <-ctx.Done():
-
 				return
 			case res <- remaining:
 			}

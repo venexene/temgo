@@ -1,3 +1,6 @@
+// temgo is a focused work timer for the terminal.
+// It supports CLI and TUI modes with JSON-based plans,
+// session history, statistics, and desktop notifications.
 package main
 
 import (
@@ -8,6 +11,7 @@ import (
 	"github.com/venexene/temgo/internal/plan"
 )
 
+// version is set at build time via ldflags.
 var version = "dev"
 
 const mainUsage = `Usage: temgo <command> [arguments]

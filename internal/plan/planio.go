@@ -9,6 +9,7 @@ import (
 	"strings"
 )
 
+// DataDir is the root directory for temgo data (~/.temgo).
 var DataDir string
 
 func init() {
@@ -19,14 +20,17 @@ func init() {
 	DataDir = filepath.Join(home, ".temgo")
 }
 
+// PlansDir returns the directory where plan JSON files are stored.
 func PlansDir() string {
 	return filepath.Join(DataDir, "plans")
 }
 
+// HistoryPath returns the path to the JSONL history file.
 func HistoryPath() string {
 	return filepath.Join(DataDir, "history.jsonl")
 }
 
+// CreateTemgoDir ensures the .temgo data and plans directories exist.
 func CreateTemgoDir() error {
 	if err := os.MkdirAll(DataDir, 0755); err != nil {
 		return fmt.Errorf("failed to create .temgo dir: %w", err)
@@ -38,6 +42,7 @@ func CreateTemgoDir() error {
 	return nil
 }
 
+// AddPlanToFolder validates and moves a plan JSON file into the plans directory.
 func AddPlanToFolder(filename string) error {
 	if _, err := LoadPlan(filename); err != nil {
 		return fmt.Errorf("invalid plan: %v", err)
@@ -56,6 +61,7 @@ func AddPlanToFolder(filename string) error {
 	return nil
 }
 
+// DeletePlanFromFolder removes a plan file from the plans directory.
 func DeletePlanFromFolder(filename string) error {
 	filePath := filepath.Join(PlansDir(), filepath.Base(filename))
 	if err := os.Remove(filePath); err != nil {
@@ -64,6 +70,7 @@ func DeletePlanFromFolder(filename string) error {
 	return nil
 }
 
+// LoadPlan reads a JSON plan file, validates it, and sets its Name from the filename.
 func LoadPlan(path string) (*Plan, error) {
 	file, err := os.Open(path)
 	if err != nil {
@@ -87,6 +94,7 @@ func LoadPlan(path string) (*Plan, error) {
 	return &plan, nil
 }
 
+// ListPlanNames returns the names of all available plans (filenames without .json).
 func ListPlanNames() ([]string, error) {
 	entries, err := os.ReadDir(PlansDir())
 	if err != nil {
@@ -107,6 +115,7 @@ func ListPlanNames() ([]string, error) {
 //go:embed plans/*.json
 var embeddedPlans embed.FS
 
+// EnsureDefaultPlans copies embedded plan files into the plans directory
 func EnsureDefaultPlans() error {
 	if err := os.MkdirAll(PlansDir(), 0755); err != nil {
 		return fmt.Errorf("failed to create plans dir: %w", err)
@@ -143,12 +152,15 @@ func EnsureDefaultPlans() error {
 	return nil
 }
 
+// DefaultPlanName is the plan used when no -P flag is given.
 var DefaultPlanName string
 
+// Config holds persistent user settings.
 type Config struct {
 	DefaultPlan string `json:"default_plan"`
 }
 
+// LoadConfig reads config.json. Returns defaults if the file is missing or corrupt.
 func LoadConfig() (Config, error) {
 	path := filepath.Join(DataDir, "config.json")
 	data, err := os.ReadFile(path)
@@ -170,6 +182,7 @@ func LoadConfig() (Config, error) {
 	return cfg, nil
 }
 
+// SaveConfig writes the config to config.json.
 func SaveConfig(cfg Config) error {
 	path := filepath.Join(DataDir, "config.json")
 	data, err := json.MarshalIndent(cfg, "", "  ")

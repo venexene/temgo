@@ -39,83 +39,49 @@ func setupStatsTest(t *testing.T) {
 	}
 }
 
-func TestRunStats_Default(t *testing.T) {
-	setupStatsTest(t)
-	err := RunStats([]string{})
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
+func TestRunStats_Success(t *testing.T) {
+	tests := []struct {
+		name string
+		args []string
+	}{
+		{"default (all)", []string{}},
+		{"today", []string{"--today"}},
+		{"week", []string{"--week"}},
+		{"all explicit", []string{"--all"}},
+		{"json export", []string{"--all", "--json"}},
+		{"csv export", []string{"--all", "--csv"}},
+		{"help", []string{"--help"}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			setupStatsTest(t)
+			err := RunStats(tt.args)
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+		})
 	}
 }
 
-func TestRunStats_Today(t *testing.T) {
-	setupStatsTest(t)
-	err := RunStats([]string{"--today"})
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
+func TestRunStats_Errors(t *testing.T) {
+	tests := []struct {
+		name string
+		args []string
+	}{
+		{"mutually exclusive ranges", []string{"--today", "--week"}},
+		{"mutually exclusive formats", []string{"--json", "--csv"}},
+		{"unknown flag", []string{"--xyz"}},
 	}
-}
 
-func TestRunStats_Week(t *testing.T) {
-	setupStatsTest(t)
-	err := RunStats([]string{"--week"})
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
-	}
-}
-
-func TestRunStats_All(t *testing.T) {
-	setupStatsTest(t)
-	err := RunStats([]string{"--all"})
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
-	}
-}
-
-func TestRunStats_MutuallyExclusive(t *testing.T) {
-	setupStatsTest(t)
-	err := RunStats([]string{"--today", "--week"})
-	if err == nil {
-		t.Error("expected error for --today --week")
-	}
-}
-
-func TestRunStats_JSON(t *testing.T) {
-	setupStatsTest(t)
-	err := RunStats([]string{"--all", "--json"})
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
-	}
-}
-
-func TestRunStats_CSV(t *testing.T) {
-	setupStatsTest(t)
-	err := RunStats([]string{"--all", "--csv"})
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
-	}
-}
-
-func TestRunStats_JSON_CSV_MutuallyExclusive(t *testing.T) {
-	setupStatsTest(t)
-	err := RunStats([]string{"--json", "--csv"})
-	if err == nil {
-		t.Error("expected error for --json --csv")
-	}
-}
-
-func TestRunStats_Help(t *testing.T) {
-	setupStatsTest(t)
-	err := RunStats([]string{"--help"})
-	if err != nil {
-		t.Errorf("help should not return error: %v", err)
-	}
-}
-
-func TestRunStats_InvalidFlag(t *testing.T) {
-	setupStatsTest(t)
-	err := RunStats([]string{"--xyz"})
-	if err == nil {
-		t.Error("expected error for unknown flag")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			setupStatsTest(t)
+			err := RunStats(tt.args)
+			if err == nil {
+				t.Error("expected error")
+			}
+		})
 	}
 }
 

@@ -1,5 +1,7 @@
 package plan
 
+// PlanIterator walks through a Plan's phases in order, respecting
+// section repeats and top-level plan repeats.
 type PlanIterator struct {
 	plan *Plan
 
@@ -11,6 +13,7 @@ type PlanIterator struct {
 	phaseIndex int
 }
 
+// NewPlanIterator returns an iterator positioned before the first phase.
 func NewPlanIterator(plan *Plan) *PlanIterator {
 	return &PlanIterator{
 		plan:          plan,
@@ -21,6 +24,7 @@ func NewPlanIterator(plan *Plan) *PlanIterator {
 	}
 }
 
+// Next advances to the next phase and returns it.
 func (pi *PlanIterator) Next() (Phase, bool) {
 	if pi.planRepeat >= pi.plan.Repeat {
 		return Phase{}, false
@@ -46,6 +50,7 @@ func (pi *PlanIterator) Next() (Phase, bool) {
 	return phase, true
 }
 
+// Reset restarts the iterator from the beginning of the plan.
 func (pi *PlanIterator) Reset() {
 	pi.planRepeat = 0
 	pi.sectionIndex = 0
@@ -53,6 +58,7 @@ func (pi *PlanIterator) Reset() {
 	pi.phaseIndex = 0
 }
 
+// CurrentRepeat returns the zero-based index of the current plan cycle.
 func (pi *PlanIterator) CurrentRepeat() int {
 	if pi.planRepeat >= pi.plan.Repeat {
 		return pi.plan.Repeat - 1

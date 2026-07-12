@@ -1,3 +1,7 @@
+// Package plan defines the data model for work-timer plans (Pomodoro-style),
+// provides JSON loading/saving, an embedded set of default plans,
+// a custom Duration type with human-readable marshaling,
+// a Builder API for programmatic plan construction, and a PlanIterator.
 package plan
 
 import (
@@ -7,6 +11,7 @@ import (
 	"time"
 )
 
+// Phase describes a single timed segment.
 type Phase struct {
 	Type     string   `json:"type"`
 	Duration Duration `json:"duration"`
@@ -17,20 +22,24 @@ type Phase struct {
 	Color    string   `json:"color"`
 }
 
+// Section groups one or more Phases and specifies how many times to repeat them.
 type Section struct {
 	Phases []Phase `json:"phases"`
 	Repeat int     `json:"repeat"`
 }
 
+// Builder provides a fluent API for constructing a Plan in code.
 type Builder struct {
 	sections []Section
 	repeat   int
 }
 
+// NewBuilder returns a new Builder.
 func NewBuilder() *Builder {
 	return &Builder{repeat: 1}
 }
 
+// AddPhase appends a single-phase section to the plan.
 func (b *Builder) AddPhase(phaseType string, duration time.Duration, name, icon, text, message, color string) *Builder {
 	b.sections = append(b.sections, Section{
 		Phases: []Phase{{phaseType, Duration(duration), name, icon, text, message, color}},
@@ -39,6 +48,7 @@ func (b *Builder) AddPhase(phaseType string, duration time.Duration, name, icon,
 	return b
 }
 
+// AddRepeating appends a section with multiple phases that repeats the given number of times.
 func (b *Builder) AddRepeating(repeat int, phases ...Phase) *Builder {
 	b.sections = append(b.sections, Section{
 		Phases: phases,
@@ -47,16 +57,19 @@ func (b *Builder) AddRepeating(repeat int, phases ...Phase) *Builder {
 	return b
 }
 
+// AddSection appends a pre-built Section.
 func (b *Builder) AddSection(section Section) *Builder {
 	b.sections = append(b.sections, section)
 	return b
 }
 
+// RepeatPlan sets how many times the entire plan cycles.
 func (b *Builder) RepeatPlan(repeat int) *Builder {
 	b.repeat = repeat
 	return b
 }
 
+// Build finalizes the builder and returns a Plan.
 func (b *Builder) Build() *Plan {
 	if b.repeat < 1 {
 		b.repeat = 1
@@ -68,12 +81,14 @@ func (b *Builder) Build() *Plan {
 	}
 }
 
+// Plan is a complete timer plan consisting of sections and a top-level repeat count.
 type Plan struct {
 	Name     string
 	Sections []Section `json:"sections"`
 	Repeat   int       `json:"repeat"`
 }
 
+// Validate checks that the plan has at least one section and a positive repeat count.
 func (p *Plan) Validate() error {
 	if len(p.Sections) == 0 {
 		return errors.New("plan has no sections")
@@ -84,6 +99,7 @@ func (p *Plan) Validate() error {
 	return nil
 }
 
+// PhasesPerCycle returns the total number of phases in one full plan cycle.
 func (p *Plan) PhasesPerCycle() int {
 	total := 0
 	for _, s := range p.Sections {

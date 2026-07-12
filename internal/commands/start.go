@@ -1,3 +1,6 @@
+// Package commands provides CLI subcommand handlers for temgo:
+// start (CLI timer), tui (Bubble Tea timer), config (plan management),
+// and stats (session statistics).
 package commands
 
 import (
@@ -27,6 +30,7 @@ Examples:
 temgo start -P classic
 `
 
+// Start runs the CLI timer
 func Start(args []string) error {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()

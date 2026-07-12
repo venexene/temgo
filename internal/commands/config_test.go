@@ -30,31 +30,27 @@ func TestRunConfig_List(t *testing.T) {
 	}
 }
 
-func TestRunConfig_SetPersists(t *testing.T) {
-	setupCommandsTest(t)
-
-	RunConfig([]string{"set", "short"})
-
-	cfg, err := plan.LoadConfig()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if cfg.DefaultPlan != "short" {
-		t.Errorf("DefaultPlan = %q, want %q", cfg.DefaultPlan, "short")
-	}
-}
-
-func TestRunConfig_SetInvalidPlan(t *testing.T) {
-	setupCommandsTest(t)
-
-	err := RunConfig([]string{"set", "nonexistent"})
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
+func TestRunConfig_Set(t *testing.T) {
+	tests := []struct {
+		name     string
+		planName string
+		wantPlan string
+	}{
+		{"valid plan", "short", "short"},
+		{"invalid plan keeps default", "nonexistent", "classic"},
 	}
 
-	cfg, _ := plan.LoadConfig()
-	if cfg.DefaultPlan != "classic" {
-		t.Errorf("DefaultPlan should stay classic, got %q", cfg.DefaultPlan)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			setupCommandsTest(t)
+
+			RunConfig([]string{"set", tt.planName})
+
+			cfg, _ := plan.LoadConfig()
+			if cfg.DefaultPlan != tt.wantPlan {
+				t.Errorf("DefaultPlan = %q, want %q", cfg.DefaultPlan, tt.wantPlan)
+			}
+		})
 	}
 }
 
@@ -92,33 +88,41 @@ func TestRunConfig_AddDelete(t *testing.T) {
 }
 
 func TestRunConfig_Show(t *testing.T) {
-	setupCommandsTest(t)
+	tests := []struct {
+		name     string
+		planName string
+	}{
+		{"existing plan", "classic"},
+		{"nonexistent plan", "nonexistent"},
+	}
 
-	err := RunConfig([]string{"show", "classic"})
-	if err != nil {
-		t.Errorf("show classic: %v", err)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			setupCommandsTest(t)
+
+			err := RunConfig([]string{"show", tt.planName})
+			if err != nil {
+				t.Errorf("show %s: %v", tt.planName, err)
+			}
+		})
 	}
 }
 
-func TestRunConfig_ShowNotFound(t *testing.T) {
-	setupCommandsTest(t)
-
-	err := RunConfig([]string{"show", "nonexistent"})
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
+func TestRunConfig_Errors(t *testing.T) {
+	tests := []struct {
+		name string
+		args []string
+	}{
+		{"no arguments", []string{}},
+		{"unknown subcommand", []string{"oops"}},
 	}
-}
 
-func TestRunConfig_NoArgs(t *testing.T) {
-	err := RunConfig([]string{})
-	if err == nil {
-		t.Error("expected error for no arguments")
-	}
-}
-
-func TestRunConfig_UnknownSubcommand(t *testing.T) {
-	err := RunConfig([]string{"oops"})
-	if err == nil {
-		t.Error("expected error for unknown subcommand")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := RunConfig(tt.args)
+			if err == nil {
+				t.Error("expected error")
+			}
+		})
 	}
 }

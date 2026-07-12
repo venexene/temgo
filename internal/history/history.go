@@ -1,3 +1,4 @@
+// Package history provides an append-only JSONL journal for session entries.
 package history
 
 import (
@@ -11,6 +12,7 @@ import (
 	"github.com/venexene/temgo/internal/plan"
 )
 
+// Entry represents a phase session.
 type Entry struct {
 	Type     string    `json:"type"`
 	Start    time.Time `json:"start"`
@@ -18,11 +20,13 @@ type Entry struct {
 	Finished bool      `json:"finished"`
 }
 
+// History holds in-memory entries and flushes them to a JSONL file.
 type History struct {
 	Entries  []Entry
 	filePath string
 }
 
+// NewHistory creates a History that writes to the given file path.
 func NewHistory(filePath string) *History {
 	return &History{
 		Entries:  []Entry{},
@@ -30,10 +34,12 @@ func NewHistory(filePath string) *History {
 	}
 }
 
+// Add appends an entry to the in-memory buffer.
 func (h *History) Add(entry Entry) {
 	h.Entries = append(h.Entries, entry)
 }
 
+// Flush writes all buffered entries to the JSONL file and clears the buffer.
 func (h *History) Flush() error {
 	if err := os.MkdirAll(filepath.Dir(h.filePath), 0755); err != nil {
 		return err
@@ -58,6 +64,7 @@ func (h *History) Flush() error {
 	return nil
 }
 
+// LoadRange returns entries whose Start falls within [from, to] inclusive.
 func LoadRange(from, to time.Time) ([]Entry, error) {
 	file, err := os.Open(plan.HistoryPath())
 	if err != nil {
@@ -90,10 +97,12 @@ func LoadRange(from, to time.Time) ([]Entry, error) {
 	return entries, nil
 }
 
+// LoadAll returns every entry in the history file.
 func LoadAll() ([]Entry, error) {
 	return LoadRange(time.Unix(0, 0), time.Now())
 }
 
+// LoadToday returns entries from the current calendar day.
 func LoadToday() ([]Entry, error) {
 	now := time.Now()
 	from := now.Truncate(24 * time.Hour)
@@ -112,12 +121,14 @@ func startOfMondayBasedWeek(t time.Time) time.Time {
 	return t.AddDate(0, 0, -shift).Truncate(24 * time.Hour)
 }
 
+// LoadWeek returns entries from the current Monday-based week.
 func LoadWeek() ([]Entry, error) {
 	from := startOfMondayBasedWeek(time.Now())
 	to := from.Add(7*24*time.Hour - time.Second)
 	return LoadRange(from, to)
 }
 
+// LoadHistory loads all entries into a new History value.
 func LoadHistory() (*History, error) {
 	entries, err := LoadAll()
 	if err != nil {

@@ -1,3 +1,6 @@
+// Package tui implements the Bubble Tea TUI for temgo.
+// It provides a plan selector screen and a timer screen with
+// progress bar, pause/skip controls, and phase notifications.
 package tui
 
 import (
@@ -23,6 +26,7 @@ const (
 	stateRunning
 )
 
+// Model holds the full TUI state.
 type Model struct {
 	state  state
 	plans  []planItem
@@ -44,6 +48,7 @@ type Model struct {
 	tickCancel context.CancelFunc
 }
 
+// NewModel creates a TUI Model with the given plan, iterator, and history.
 func NewModel(plan *plan.Plan, iterator *plan.PlanIterator, history *history.History) *Model {
 	return &Model{
 		plan:     plan,
@@ -96,6 +101,7 @@ func (m *Model) startPlan() (tea.Model, tea.Cmd) {
 
 type initMsg struct{}
 
+// Init is the Bubble Tea init hook.
 func (m Model) Init() tea.Cmd {
 	return func() tea.Msg {
 		return initMsg{}
@@ -174,6 +180,7 @@ func (m *Model) updateSelector(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+// Update handles Bubble Tea messages, dispatching to the selector or timer sub-view.
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case initMsg:
@@ -334,6 +341,7 @@ func (m Model) viewSelector() string {
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, box)
 }
 
+// View renders the current TUI screen.
 func (m Model) View() string {
 	if m.state == stateSelecting {
 		return m.viewSelector()
