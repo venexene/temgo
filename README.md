@@ -2,7 +2,6 @@
 
 [![Go Version](https://img.shields.io/badge/Go-1.25-00ADD8?logo=go)](https://go.dev/)
 [![CI](https://github.com/venexene/temgo/actions/workflows/ci.yml/badge.svg)](https://github.com/venexene/temgo/actions)
-[![Go Report Card](https://goreportcard.com/badge/github.com/venexene/temgo)](https://goreportcard.com/report/github.com/venexene/temgo)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 A focused work timer for the terminal. Two modes: CLI and TUI powered by Bubble Tea.

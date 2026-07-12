@@ -53,7 +53,7 @@ func TestTimer_Cancellation(t *testing.T) {
 	select {
 	case err := <-errChan:
 		if err == nil {
-			t.Error("expected error from cancelled context")
+			t.Error("expected error from canceled context")
 		}
 	case <-time.After(2 * time.Second):
 		t.Fatal("timeout: runPhase didn't return after cancellation")
@@ -112,5 +112,17 @@ func TestWorkTimer_run_ctxBetweenPhases(t *testing.T) {
 	case <-done:
 	case <-time.After(3 * time.Second):
 		t.Fatal("run() didn't exit after ctx cancel — may have started phase 2")
+	}
+}
+
+func TestWorkTimer_Start(t *testing.T) {
+	p := plan.NewBuilder().
+		AddPhase("work", 100*time.Millisecond, "W", "•", "", "", "#FFF").
+		Build()
+
+	wt := NewWorkTimer(p, history.NewHistory(filepath.Join(t.TempDir(), "test.jsonl")))
+
+	if err := wt.Start(context.Background()); err != nil {
+		t.Errorf("Start: %v", err)
 	}
 }

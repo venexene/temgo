@@ -64,8 +64,14 @@ func (t *WorkTimer) run(ctx context.Context) {
 			fmt.Println("\nInterrupted")
 			return
 		}
-		beeep.Beep(beeep.DefaultFreq, beeep.DefaultDuration)
-		beeep.Notify("temgo", phase.Message, "")
+		
+		if err := beeep.Beep(beeep.DefaultFreq, beeep.DefaultDuration); err != nil {
+			fmt.Fprintf(os.Stderr, "failed to use system beep: %v", err)
+		}
+
+		if err := beeep.Notify("temgo", phase.Message, ""); err != nil {
+			fmt.Fprintf(os.Stderr, "failed to use system notification: %v", err)
+		}
 	}
 	fmt.Println("\nPlan is over!")
 }

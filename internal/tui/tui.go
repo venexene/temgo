@@ -363,8 +363,13 @@ func (m *Model) switchPhase(finished bool) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
-	beeep.Beep(beeep.DefaultFreq, beeep.DefaultDuration)
-	beeep.Notify("temgo", newPhase.Message, "")
+	if err := beeep.Beep(beeep.DefaultFreq, beeep.DefaultDuration); err != nil {
+		fmt.Fprintf(os.Stderr, "failed to use system beep: %v", err)
+	}
+
+	if err := beeep.Notify("temgo", newPhase.Message, ""); err != nil {
+		fmt.Fprintf(os.Stderr, "failed to use system notification: %v", err)
+	}
 
 	m.currentPhase = newPhase
 	m.remaining = time.Duration(newPhase.Duration)

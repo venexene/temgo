@@ -155,6 +155,8 @@ func EnsureDefaultPlans() error {
 // DefaultPlanName is the plan used when no -P flag is given.
 var DefaultPlanName string
 
+var classicPlan = "classic"
+
 // Config holds persistent user settings.
 type Config struct {
 	DefaultPlan string `json:"default_plan"`
@@ -165,7 +167,7 @@ func LoadConfig() (Config, error) {
 	path := filepath.Join(DataDir, "config.json")
 	data, err := os.ReadFile(path)
 	if os.IsNotExist(err) {
-		return Config{DefaultPlan: "classic"}, nil
+		return Config{DefaultPlan: classicPlan}, nil
 	}
 	if err != nil {
 		return Config{}, err
@@ -173,10 +175,10 @@ func LoadConfig() (Config, error) {
 
 	var cfg Config
 	if err := json.Unmarshal(data, &cfg); err != nil {
-		return Config{DefaultPlan: "classic"}, nil
+		return Config{DefaultPlan: classicPlan}, nil
 	}
 	if cfg.DefaultPlan == "" {
-		cfg.DefaultPlan = "classic"
+		cfg.DefaultPlan = classicPlan
 	}
 
 	return cfg, nil

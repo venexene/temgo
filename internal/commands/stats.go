@@ -118,14 +118,19 @@ func printJSON(entries []history.Entry) {
 
 func printCSV(entries []history.Entry) {
 	w := csv.NewWriter(os.Stdout)
-	w.Write([]string{"type", "start", "duration_sec", "finished"})
+	if err := w.Write([]string{"type", "start", "duration_sec", "finished"}); err != nil {
+		fmt.Fprintf(os.Stderr, "failed print history to csv: %v\n", err)
+	}
 	for _, e := range entries {
-		w.Write([]string{
+		err := w.Write([]string{
 			e.Type,
 			e.Start.Format(time.RFC3339),
 			strconv.Itoa(e.Duration),
 			strconv.FormatBool(e.Finished),
 		})
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "failed print history to csv: %v\n", err)
+		}
 	}
 	w.Flush()
 	if err := w.Error(); err != nil {
