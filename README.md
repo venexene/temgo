@@ -8,6 +8,10 @@ A focused work timer for the terminal. Two modes: CLI and TUI powered by Bubble 
 
 ![](temgo.gif)
 
+## Tech Stack
+
+**Go** · **Bubble Tea** · **Lipgloss** · **Beep** · **GitHub Actions**
+
 ## Install
 
 ```
